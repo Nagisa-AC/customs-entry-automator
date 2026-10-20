@@ -1,0 +1,166 @@
+{
+  "schemaVersion": "extraction-v1",
+  "page": 2,
+  "header": {
+    "invoiceNumber": null,
+    "invoiceDate": null,
+    "currency": null,
+    "sellerName": null,
+    "buyerName": null,
+    "invoiceTotal": "597.099,50"
+  },
+  "lines": [
+    {
+      "page": 2,
+      "rowOnPage": 1,
+      "sku": "RW-1070",
+      "description": "Copper cable lug 16mm2",
+      "quantity": "475",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "2,64",
+      "extendedPrice": "1.254,00",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1098,
+        0.9641,
+        0.1288
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 2,
+      "sku": "RW-1077",
+      "description": "Carbide drill bit 6mm",
+      "quantity": "625",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "18,59",
+      "extendedPrice": "11.618,75",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1301,
+        0.9641,
+        0.149
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 3,
+      "sku": "RW-1084",
+      "description": "Zinc-plated hex bolt M8x40",
+      "quantity": "7.500",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "22,28",
+      "extendedPrice": "167.100,00",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1503,
+        0.9641,
+        0.1692
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 4,
+      "sku": "RW-1091",
+      "description": "Stainless flat washer M8",
+      "quantity": "600",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "8,51",
+      "extendedPrice": "5.106,00",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1705,
+        0.9641,
+        0.1894
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 5,
+      "sku": "RW-1098",
+      "description": "Nylon insert lock nut M8",
+      "quantity": "525",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "17,13",
+      "extendedPrice": "8.993,25",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1907,
+        0.9641,
+        0.2096
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 6,
+      "sku": "RW-1105",
+      "description": "Steel L-bracket 75mm with countersunk mounting holes",
+      "quantity": "175",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "21,02",
+      "extendedPrice": "3.678,50",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2109,
+        0.9641,
+        0.2298
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 7,
+      "sku": "RW-1112",
+      "description": "Brass cabinet hinge 50mm",
+      "quantity": "4.800",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "23,96",
+      "extendedPrice": "115.008,00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2311,
+        0.9641,
+        0.25
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 8,
+      "sku": "RW-1119",
+      "description": "Drawer slide full extension 450mm",
+      "quantity": "200",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "6,13",
+      "extendedPrice": "1.226,00",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2513,
+        0.9641,
+        0.2702
+      ]
+    }
+  ]
+}

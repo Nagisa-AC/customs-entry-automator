@@ -1,0 +1,166 @@
+{
+  "schemaVersion": "extraction-v1",
+  "page": 1,
+  "header": {
+    "invoiceNumber": "HL-2026-0412",
+    "invoiceDate": "2026-09-14",
+    "currency": "USD",
+    "sellerName": "Harbor Lane Hardware Mfg. Co., Ltd. (synthetic)",
+    "buyerName": "Example Importer LLC (synthetic)",
+    "invoiceTotal": "25,646.75"
+  },
+  "lines": [
+    {
+      "page": 1,
+      "rowOnPage": 1,
+      "sku": "HL-1000",
+      "description": "Zinc-plated hex bolt M8x40",
+      "quantity": "250",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "6.68",
+      "extendedPrice": "1,670.00",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1831,
+        0.9641,
+        0.202
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 2,
+      "sku": "HL-1007",
+      "description": "Stainless flat washer M8",
+      "quantity": "100",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "17.21",
+      "extendedPrice": "1,721.00",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2033,
+        0.9641,
+        0.2222
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 3,
+      "sku": "HL-1014",
+      "description": "Nylon insert lock nut M8",
+      "quantity": "100",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "17.27",
+      "extendedPrice": "1,727.00",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2235,
+        0.9641,
+        0.2424
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 4,
+      "sku": "HL-1021",
+      "description": "Steel L-bracket 75mm with countersunk mounting holes",
+      "quantity": "225",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "18.95",
+      "extendedPrice": "4,263.75",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2437,
+        0.9641,
+        0.2626
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 5,
+      "sku": "HL-1028",
+      "description": "Brass cabinet hinge 50mm",
+      "quantity": "375",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "8.57",
+      "extendedPrice": "3,213.75",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2639,
+        0.9641,
+        0.2828
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 6,
+      "sku": "HL-1035",
+      "description": "Drawer slide full extension 450mm",
+      "quantity": "650",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "9.46",
+      "extendedPrice": "6,149.00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2841,
+        0.9641,
+        0.303
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 7,
+      "sku": "HL-1042",
+      "description": "Cordless drill battery pack 18V 2.0Ah lithium-ion",
+      "quantity": "675",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "9.63",
+      "extendedPrice": "6,500.25",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3043,
+        0.9641,
+        0.3232
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 8,
+      "sku": "HL-9001",
+      "description": "Precision bearing 608ZZ",
+      "quantity": "1,200",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "0.335",
+      "extendedPrice": "402.00",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3245,
+        0.9641,
+        0.3434
+      ]
+    }
+  ]
+}

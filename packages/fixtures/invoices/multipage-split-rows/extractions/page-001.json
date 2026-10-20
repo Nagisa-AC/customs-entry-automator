@@ -1,0 +1,318 @@
+{
+  "schemaVersion": "extraction-v1",
+  "page": 1,
+  "header": {
+    "invoiceNumber": "PX-77310",
+    "invoiceDate": "2026-09-30",
+    "currency": "USD",
+    "sellerName": "Pacific Crossing Industrial Supply (synthetic)",
+    "buyerName": "Example Importer LLC (synthetic)",
+    "invoiceTotal": null
+  },
+  "lines": [
+    {
+      "page": 1,
+      "rowOnPage": 1,
+      "sku": "PX-1000",
+      "description": "Zinc-plated hex bolt M8x40",
+      "quantity": "275",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "2.16",
+      "extendedPrice": "594.00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1831,
+        0.9641,
+        0.202
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 2,
+      "sku": "PX-1007",
+      "description": "Stainless flat washer M8",
+      "quantity": "225",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "9.06",
+      "extendedPrice": "2,038.50",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2033,
+        0.9641,
+        0.2222
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 3,
+      "sku": "PX-1014",
+      "description": "Nylon insert lock nut M8",
+      "quantity": "450",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "2.89",
+      "extendedPrice": "1,300.50",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2235,
+        0.9641,
+        0.2424
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 4,
+      "sku": "PX-1021",
+      "description": "Steel L-bracket 75mm with countersunk mounting holes",
+      "quantity": "1,000",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "20.52",
+      "extendedPrice": "20,520.00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2437,
+        0.9641,
+        0.2626
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 5,
+      "sku": "PX-1028",
+      "description": "Brass cabinet hinge 50mm",
+      "quantity": "650",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "20.72",
+      "extendedPrice": "13,468.00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2639,
+        0.9641,
+        0.2828
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 6,
+      "sku": "PX-1035",
+      "description": "Drawer slide full extension 450mm",
+      "quantity": "100",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "3.41",
+      "extendedPrice": "341.00",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2841,
+        0.9641,
+        0.303
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 7,
+      "sku": "PX-1042",
+      "description": "Cordless drill battery pack 18V 2.0Ah lithium-ion",
+      "quantity": "925",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "21.39",
+      "extendedPrice": "19,785.75",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3043,
+        0.9641,
+        0.3232
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 8,
+      "sku": "PX-1049",
+      "description": "Rubber grommet assortment kit",
+      "quantity": "200",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "13.25",
+      "extendedPrice": "2,650.00",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3245,
+        0.9641,
+        0.3434
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 9,
+      "sku": "PX-1056",
+      "description": "Aluminium T-slot extrusion 1m",
+      "quantity": "950",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "19.76",
+      "extendedPrice": "18,772.00",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3447,
+        0.9641,
+        0.3636
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 10,
+      "sku": "PX-1063",
+      "description": "PVC conduit elbow 20mm",
+      "quantity": "850",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "11.25",
+      "extendedPrice": "9,562.50",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3649,
+        0.9641,
+        0.3838
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 11,
+      "sku": "PX-1070",
+      "description": "Copper cable lug 16mm2",
+      "quantity": "25",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "12.94",
+      "extendedPrice": "323.50",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3851,
+        0.9641,
+        0.404
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 12,
+      "sku": "PX-1077",
+      "description": "Carbide drill bit 6mm",
+      "quantity": "850",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "16.39",
+      "extendedPrice": "13,931.50",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.4053,
+        0.9641,
+        0.4242
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 13,
+      "sku": "PX-1084",
+      "description": "Zinc-plated hex bolt M8x40",
+      "quantity": "600",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "16.76",
+      "extendedPrice": "10,056.00",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.4255,
+        0.9641,
+        0.4444
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 14,
+      "sku": "PX-1091",
+      "description": "Stainless flat washer M8",
+      "quantity": "725",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "23.81",
+      "extendedPrice": "17,262.25",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.4457,
+        0.9641,
+        0.4646
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 15,
+      "sku": "PX-1098",
+      "description": "Nylon insert lock nut M8",
+      "quantity": "100",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "4.64",
+      "extendedPrice": "464.00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.4659,
+        0.9641,
+        0.4848
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 16,
+      "sku": "PX-1105",
+      "description": "Steel L-bracket 75mm",
+      "quantity": null,
+      "unitOfMeasure": null,
+      "unitPrice": null,
+      "extendedPrice": null,
+      "countryOfOrigin": null,
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": true,
+      "region": [
+        0.049,
+        0.4861,
+        0.9641,
+        0.5051
+      ]
+    }
+  ]
+}
