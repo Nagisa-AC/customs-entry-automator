@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "@cea/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@cea/fixtures": "workspace:*"
   }
 }

@@ -25,6 +25,32 @@ pnpm test       # Vitest only
 pnpm cea version
 ```
 
+## Running the pipeline
+
+```sh
+# One invoice. Uses recorded extractions in <pdf dir>/extractions when present.
+pnpm cea run packages/fixtures/invoices/broken-math-unmatched/invoice.pdf \
+  --skus packages/fixtures/invoices/broken-math-unmatched/sku-sheet.csv
+
+# Every <name>/invoice.pdf + sku-sheet.csv|xlsx under a folder (the labeled set).
+pnpm m1:labeled-set
+```
+
+Each stage writes to the output folder (default `.cea-out/<name>/`):
+`pages/` (PNG + text layer) → `extract/` (raw and validated output per page)
+→ `stitched.json` → `normalized.json` → `checks.json` → `matched.json` →
+`lines.csv` + `report.json`. Saved raw extractions are reused by cache key,
+so re-runs never call the model; `--from <stage>` re-runs from any stage
+using the saved outputs of earlier ones.
+
+To use a real model: `--provider openai` with `OPENAI_API_KEY`,
+`CEA_OPENAI_MODEL` (required) and optionally `OPENAI_BASE_URL`. Without keys,
+only invoices that have recorded extractions can run.
+
+Exit codes: `0` ready for approval, `1` needs review or failed, `2` usage or
+fatal error. `lines.csv` is a generic development artifact, not a
+filing-system import format.
+
 Never commit customer documents or API keys. Fixtures in the repo are
 synthetic. `samples/real/` and `private-samples/` are git-ignored, but that is only a
 second layer: real broker files belong on an encrypted disk outside any folder
