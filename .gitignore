@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.cea-out/
+out/
+*.log
+.env
+.env.*
+!.env.example
+
+# Customer documents never belong in the repo; only synthetic fixtures under fixtures/.
+private-samples/
