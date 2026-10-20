@@ -55,9 +55,27 @@ discount, insurance or charge terms, and whether R2 failed alongside them. Saved
 so re-runs never call the model; `--from <stage>` re-runs from any stage
 using the saved outputs of earlier ones.
 
-To use a real model: `--provider openai` with `OPENAI_API_KEY`,
-`CEA_OPENAI_MODEL` (required) and optionally `OPENAI_BASE_URL`. Without keys,
-only invoices that have recorded extractions can run.
+To use a real model: `--provider openai` (`OPENAI_API_KEY`, `CEA_OPENAI_MODEL`,
+optional `OPENAI_BASE_URL`) or `--provider anthropic` (`ANTHROPIC_API_KEY`,
+`CEA_ANTHROPIC_MODEL`, optional `ANTHROPIC_BASE_URL`, `CEA_ANTHROPIC_BETA`).
+See `.env.example`. Without keys, only invoices that have recorded extractions
+can run.
+
+## Comparing providers
+
+```sh
+pnpm cea compare packages/fixtures/invoices --providers openai,anthropic \
+  --prices prices.json --out .cea-out/compare
+```
+
+Runs every labeled invoice (`invoice.pdf` + `sku-sheet.*` + `ground-truth.json`)
+through the full pipeline per provider and writes `comparison.json` and
+`comparison.md`: silent errors (wrong quantity, price, origin or HTS on a row
+with no blocking finding, or wrong currency/total on an unblocked invoice),
+line recall and precision, per-field and header accuracy, latency per page,
+tokens and cost (when `--prices` gives USD per million tokens). Offline,
+`--providers fixture,simulated-noisy` exercises the harness with a recorded
+"perfect" provider and a deliberately error-prone one.
 
 **Real broker invoices:** do not run any until the provider account is
 confirmed for zero data retention and US-region processing. Real providers

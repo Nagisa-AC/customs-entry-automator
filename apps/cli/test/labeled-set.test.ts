@@ -163,3 +163,20 @@ describe("cli", () => {
     ).toBe("openai");
   });
 });
+
+describe("cli compare", () => {
+  it("compares providers offline and requires --providers", async () => {
+    quiet();
+    const out = await mkdtemp(join(tmpdir(), "cea-cli-compare-"));
+    expect(await run(["compare", INVOICES_DIR, "--providers", "fixture,simulated-noisy", "--out", out])).toBe(0);
+    const summaries = JSON.parse(await readFile(join(out, "comparison.json"), "utf8")) as { provider: string; silentErrors: number }[];
+    expect(summaries.map((s) => [s.provider, s.silentErrors > 0])).toEqual([["fixture", false], ["simulated-noisy", true]]);
+    expect(await run(["compare", INVOICES_DIR])).toBe(2);
+  }, 60_000);
+
+  it("builds the anthropic provider from env", () => {
+    const pdf = join(fixtureDir("clean-us-single-page"), "invoice.pdf");
+    expect(() => selectProvider("anthropic", pdf, undefined, {})).toThrow(/ANTHROPIC_API_KEY/);
+    expect(selectProvider("anthropic", pdf, undefined, { ANTHROPIC_API_KEY: "k", CEA_ANTHROPIC_MODEL: "m" }).id).toBe("anthropic");
+  });
+});
