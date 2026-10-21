@@ -1,0 +1,24 @@
+{
+  "name": "@cea/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "1.0.12",
+    "csv-parse": "7.0.3",
+    "decimal.js": "10.6.0",
+    "pdfjs-dist": "6.4.299",
+    "read-excel-file": "9.3.12",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cea/fixtures": "workspace:*",
+    "write-excel-file": "4.1.1"
+  }
+}
