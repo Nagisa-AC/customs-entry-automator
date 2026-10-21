@@ -93,6 +93,7 @@ describe("M1 exit criterion on the synthetic labeled set", () => {
     expect(failures).toEqual(expected);
     expect(report.status).toBe(expected.length && report.checks.some((c) => c.outcome === "fail" && c.severity === "blocking") ? "needs_review" : "ready_for_approval");
     expect(report.checks.every((c) => typeof c.ruleId === "string" && "row" in c && "page" in c)).toBe(true);
+    expect((report as unknown as { adjustments: unknown }).adjustments).toEqual({ probableLines: [], r2Failed: false });
   });
 
   it("removes a stale lines.csv when a re-run becomes blocked", async () => {

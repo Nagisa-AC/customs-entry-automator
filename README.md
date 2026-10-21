@@ -49,7 +49,9 @@ unmatched SKU (R4) blocks, so a row with no HTS never reaches `lines.csv`.
 Checks follow the v0 design's rules: R1 line math (0.01), R2 footer total
 (0.01 × line count), R3 net ≤ gross weight, R4 SKU found in the SKU sheet, R5 SKU,
 quantity, unit price and origin on every line, R6 same SKU and price across a
-page break (warning), R7 page continuity. Saved raw extractions are reused by cache key,
+page break (warning), R7 page continuity. `report.json` also has a heuristic
+`adjustments` counter (not a rule): lines with no SKU or with freight,
+discount, insurance or charge terms, and whether R2 failed alongside them. Saved raw extractions are reused by cache key,
 so re-runs never call the model; `--from <stage>` re-runs from any stage
 using the saved outputs of earlier ones.
 

@@ -2,7 +2,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { CATALOG_MATCHER_VERSION, loadCatalog, matchCatalog, type MatchResult } from "./catalog.ts";
 import type { CheckResult } from "./checks.ts";
-import { buildReport, EXPORTER_VERSION, REPORT_VERSION, toLinesCsv, type Report } from "./export.ts";
+import { buildReport, countAdjustmentLines, EXPORTER_VERSION, REPORT_VERSION, toLinesCsv, type Report } from "./export.ts";
 import { extract, type ExtractOptions, type PageOutcome } from "./extract/extract.ts";
 import { PROMPT_VERSION } from "./extract/prompt.ts";
 import { stitch, STITCHER_VERSION, type StitchResult } from "./extract/stitch.ts";
@@ -187,6 +187,7 @@ export async function runPipeline(opts: PipelineOptions): Promise<PipelineResult
     },
     lineCount: matched.lines.length,
     matched: matched.lines.filter((l) => l.match.status === "matched").length,
+    adjustments: countAdjustmentLines(matched.lines, checks),
     checks,
   });
   const blocked = report.summary.blocking > 0;

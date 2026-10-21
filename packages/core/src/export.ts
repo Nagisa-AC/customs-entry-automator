@@ -1,10 +1,34 @@
 import Decimal from "decimal.js";
 import type { MatchedLine } from "./catalog.ts";
 import { isBlockingFailure, type CheckResult } from "./checks.ts";
-import type { Amount } from "./normalizer.ts";
+import type { Amount, NormalizedLine } from "./normalizer.ts";
+import { RULE_IDS } from "./rules.ts";
 
 export const EXPORTER_VERSION = "generic-csv-v1";
-export const REPORT_VERSION = "report-v1";
+export const REPORT_VERSION = "report-v2";
+
+const ADJUSTMENT_TERM = /\b(freight|shipping|discount|rebate|insurance|surcharge|fees?|charges?)\b/i;
+
+/**
+ * Heuristic count of lines that look like freight, discount or other
+ * adjustments, which M1 doesn't support and which make R2 fail. Not a rule:
+ * it never changes status or blocks anything.
+ */
+export interface AdjustmentLines {
+  probableLines: { row: number; page: number; reason: "no-sku" | "adjustment-term"; term: string | null }[];
+  r2Failed: boolean;
+}
+
+export function countAdjustmentLines(lines: readonly NormalizedLine[], checks: readonly CheckResult[]): AdjustmentLines {
+  const probableLines = lines.flatMap((l): AdjustmentLines["probableLines"] => {
+    const term = l.description ? (ADJUSTMENT_TERM.exec(l.description)?.[1]?.toLowerCase() ?? null) : null;
+    if (term) return [{ row: l.row, page: l.page, reason: "adjustment-term", term }];
+    if (l.sku === null) return [{ row: l.row, page: l.page, reason: "no-sku", term: null }];
+    return [];
+  });
+  const r2Failed = checks.some((c) => c.ruleId === RULE_IDS.footerTotal && c.outcome === "fail");
+  return { probableLines, r2Failed };
+}
 
 const FORMULA_START = /^[=+\-@\t\r]/;
 
@@ -71,6 +95,7 @@ export interface ReportInput {
   };
   lineCount: number;
   matched: number;
+  adjustments: AdjustmentLines;
   checks: CheckResult[];
 }
 
