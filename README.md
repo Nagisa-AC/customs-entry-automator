@@ -22,5 +22,7 @@ pnpm test       # Vitest only
 pnpm cea version
 ```
 
-Never commit customer documents or API keys. Real invoices go in
-`private-samples/` (git-ignored); fixtures in the repo are synthetic.
+Never commit customer documents or API keys. Fixtures in the repo are
+synthetic. `samples/real/` and `private-samples/` are git-ignored, but that is only a
+second layer: real broker files belong on an encrypted disk outside any folder
+an AI coding tool can read.

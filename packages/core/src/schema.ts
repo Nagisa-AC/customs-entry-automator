@@ -56,7 +56,11 @@ export const ExtractedHeader = z
     currency: RawField,
     sellerName: RawField,
     buyerName: RawField,
+    incoterms: RawField,
     invoiceTotal: RawField,
+    /** As printed, with its unit ("1.250,5 kg", "2,760 LBS"). */
+    totalGrossWeight: RawField,
+    totalNetWeight: RawField,
   })
   .strict();
 export type ExtractedHeader = z.infer<typeof ExtractedHeader>;

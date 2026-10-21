@@ -11,7 +11,10 @@ function validPage(): PageExtraction {
       currency: "USD",
       sellerName: "Example Supplier Co.",
       buyerName: "Example Importer LLC",
+      incoterms: "FOB Shanghai",
       invoiceTotal: "1,234.50",
+      totalGrossWeight: "1,250.5 KG",
+      totalNetWeight: "1,180 KG",
     },
     lines: [
       {
@@ -45,6 +48,7 @@ describe("parsePageExtraction", () => {
     expect(line.unitPrice).toBe("$12.345");
     expect(line.sku).toBe(" ab-100 ");
     expect(result.value.header.invoiceTotal).toBe("1,234.50");
+    expect(result.value.header.totalGrossWeight).toBe("1,250.5 KG");
   });
 
   it("rejects numeric values instead of coercing them", () => {
