@@ -44,13 +44,11 @@ function mergeSplit(head: ExtractedLine, tail: ExtractedLine): ExtractedLine {
   };
 }
 
-const sameLine = (a: ExtractedLine, b: ExtractedLine) =>
-  a.sku !== null && [...VALUE_FIELDS, "description" as const].every((f) => a[f] === b[f]);
-
 /**
  * Merge per-page extractions into one document, in page order. Rows split
  * across a page break are merged only when the halves are complementary;
- * nothing is dropped, and every merge or suspicion is reported.
+ * nothing is dropped, and every merge is reported. Rows repeated across a
+ * page break are kept as-is and left for R6.
  */
 export function stitch(outcomes: readonly PageOutcome[], pageCount: number): StitchResult {
   const sorted = [...outcomes].sort((a, b) => a.page - b.page);
@@ -116,20 +114,6 @@ export function stitch(outcomes: readonly PageOutcome[], pageCount: number): Sti
             message: bothFlagged
               ? `Row split across pages ${head.page}-${tail.page} was merged.`
               : `Row split across pages ${head.page}-${tail.page} was merged although only one side was marked as continued. Verify against the source.`,
-          }),
-        );
-      } else if (sameLine(head, tail)) {
-        findings.push(
-          finding({
-            ruleId: "stitch-boundary-duplicate",
-            severity: "warning",
-            outcome: "fail",
-            row: lines.length + 1,
-            page: tail.page,
-            field: null,
-            expected: "distinct rows across the page break",
-            actual: `first row of page ${tail.page} repeats last row of page ${head.page}`,
-            message: "The first row on this page repeats the last row of the previous page (often a carried-forward row). Both are kept; confirm whether it is a real second line.",
           }),
         );
       }

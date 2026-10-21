@@ -41,7 +41,10 @@ async function extractFixture(name: string): Promise<PageOutcome[]> {
   });
 }
 
-const emptyHeader = { invoiceNumber: null, invoiceDate: null, currency: null, sellerName: null, buyerName: null, invoiceTotal: null };
+const emptyHeader = {
+  invoiceNumber: null, invoiceDate: null, currency: null, sellerName: null, buyerName: null,
+  incoterms: null, invoiceTotal: null, totalGrossWeight: null, totalNetWeight: null,
+};
 
 function outcome(page: number, lines: ExtractedLine[], header: Partial<PageExtraction["header"]> = {}): PageOutcome {
   return {
@@ -64,6 +67,10 @@ describe("stitch() on synthetic fixtures", () => {
     expect(n.header.invoiceNumber).toBe(gt.header.invoiceNumber);
     expect(n.header.currency).toBe(gt.header.currency);
     expect(n.header.invoiceTotal?.value).toBe(gt.header.invoiceTotal);
+    expect(n.header.incoterms).toBe(gt.header.incoterms);
+    expect(`${n.header.totalGrossWeight?.value} / ${n.header.totalNetWeight?.value}`).toBe(
+      `${gt.header.totalGrossWeight!.split(" ")[0]} / ${gt.header.totalNetWeight!.split(" ")[0]}`,
+    );
     expect(
       n.lines.map((l) => ({
         row: l.row, page: l.page, sku: l.sku, description: l.description, quantity: l.quantity?.value ?? null,
@@ -119,7 +126,7 @@ describe("stitch() edge cases", () => {
   it("does not merge halves that both carry values; leaves them for page-continuity to block", () => {
     const { document } = stitch([outcome(1, [head]), outcome(2, [{ ...tail, sku: "OTHER" }])], 2);
     expect(document.lines).toHaveLength(2);
-    const checks = runRules(normalizeDocument(document)).filter((c: CheckResult) => c.ruleId === "page-continuity" && c.outcome === "fail");
+    const checks = runRules(normalizeDocument(document)).filter((c: CheckResult) => c.ruleId === "R7-page-continuity" && c.outcome === "fail");
     expect(checks.length).toBeGreaterThan(0);
   });
 
@@ -129,12 +136,14 @@ describe("stitch() edge cases", () => {
     expect(document.pages[1]).toEqual({ page: 2, status: "failed", error: "schema validation failed" });
   });
 
-  it("flags a row repeated across a page break but keeps both", () => {
+  it("keeps a row repeated across a page break and leaves it for R6", () => {
     const a = line({ rowOnPage: 9 });
     const b = line({ page: 2, rowOnPage: 1 });
     const { document, findings } = stitch([outcome(1, [a]), outcome(2, [b])], 2);
     expect(document.lines).toHaveLength(2);
-    expect(findings[0]).toMatchObject({ ruleId: "stitch-boundary-duplicate", row: 2, page: 2 });
+    expect(findings).toEqual([]);
+    const r6 = runRules(normalizeDocument(document)).filter((c) => c.ruleId === "R6-duplicate-lines" && c.outcome === "fail");
+    expect(r6).toMatchObject([{ severity: "warning", row: 2, page: 2 }]);
   });
 
   it("orders pages regardless of input order", () => {

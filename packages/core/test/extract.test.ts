@@ -69,7 +69,7 @@ describe("extract()", () => {
       "page-001.json", "page-001.raw.json", "page-002.json", "page-002.raw.json", "page-003.json", "page-003.raw.json",
     ]);
     const raw = JSON.parse(await readFile(join(dir, "page-002.raw.json"), "utf8"));
-    expect(raw).toMatchObject({ provider: "test", model: "m1", promptVersion: "page-prompt-v1", schemaVersion: "extraction-v1", page: 2, attempts: 1 });
+    expect(raw).toMatchObject({ provider: "test", model: "m1", promptVersion: "page-prompt-v2", schemaVersion: "extraction-v1", page: 2, attempts: 1 });
     expect(typeof raw.rawText).toBe("string");
     expect(raw.cacheKey).toMatch(/^[0-9a-f]{64}$/);
   });
