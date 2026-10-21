@@ -39,7 +39,9 @@ pnpm m1:labeled-set
 Each stage writes to the output folder (default `.cea-out/<name>/`):
 `pages/` (PNG + text layer) → `extract/` (raw and validated output per page)
 → `stitched.json` → `normalized.json` → `checks.json` → `matched.json` →
-`lines.csv` + `report.json`. Saved raw extractions are reused by cache key,
+`report.json` + `lines.csv`. If any blocking finding exists, `lines.csv` is
+not written (a stale one is removed); `lines.review.csv` is written instead,
+with affected rows marked `needs_review`, and the CLI exits 1. Saved raw extractions are reused by cache key,
 so re-runs never call the model; `--from <stage>` re-runs from any stage
 using the saved outputs of earlier ones.
 
@@ -47,8 +49,14 @@ To use a real model: `--provider openai` with `OPENAI_API_KEY`,
 `CEA_OPENAI_MODEL` (required) and optionally `OPENAI_BASE_URL`. Without keys,
 only invoices that have recorded extractions can run.
 
-Exit codes: `0` ready for approval, `1` needs review or failed, `2` usage or
-fatal error. `lines.csv` is a generic development artifact, not a
+**Real broker invoices:** do not run any until the provider account is
+confirmed for zero data retention and US-region processing. Real providers
+refuse to start until the operator sets `CEA_PROVIDER_ZERO_RETENTION=confirmed`
+and `CEA_PROVIDER_REGION=us`, which should only be done after verifying the
+contract terms.
+
+Exit codes: `0` ready for approval, `1` needs review or failed (for
+`run-set`: any invoice), `2` usage or fatal error. `lines.csv` is a generic development artifact, not a
 filing-system import format.
 
 Never commit customer documents or API keys. Fixtures in the repo are

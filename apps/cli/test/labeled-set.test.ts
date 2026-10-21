@@ -1,5 +1,6 @@
 import { fixtureDir, INVOICES_DIR, listFixtures } from "@cea/fixtures";
-import { cp, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { cp, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it, vi } from "vitest";
@@ -39,21 +40,33 @@ describe("M1 exit criterion on the synthetic labeled set", () => {
   beforeAll(async () => {
     quiet();
     out = await mkdtemp(join(tmpdir(), "cea-set-"));
-    expect(await run(["run-set", INVOICES_DIR, "--out", out])).toBe(0);
+    expect(await run(["run-set", INVOICES_DIR, "--out", out])).toBe(1);
     first = await tree(out);
   }, 60_000);
 
   it("runs every invoice end to end and writes every stage output", () => {
     for (const name of listFixtures()) {
-      for (const f of ["pages/manifest.json", "extract/manifest.json", "stitched.json", "normalized.json", "checks.json", "matched.json", "lines.csv", "report.json"]) {
+      for (const f of ["pages/manifest.json", "extract/manifest.json", "stitched.json", "normalized.json", "checks.json", "matched.json", "report.json"]) {
         expect(first.has(join(name, f)), `${name}/${f}`).toBe(true);
       }
     }
   });
 
+  it("writes lines.csv only without blocking findings, otherwise only lines.review.csv", () => {
+    for (const name of listFixtures()) {
+      const report = JSON.parse(first.get(join(name, "report.json"))!.toString()) as Report;
+      const blocked = report.summary.blocking > 0;
+      expect(first.has(join(name, "lines.csv")), `${name} lines.csv`).toBe(!blocked);
+      expect(first.has(join(name, "lines.review.csv")), `${name} lines.review.csv`).toBe(blocked);
+    }
+    const review = first.get(join("broken-math-unmatched", "lines.review.csv"))!.toString().split("\r\n");
+    expect(review.filter((r) => r.includes(",needs_review,")).length).toBeGreaterThan(0);
+    expect(review.filter((r) => r.includes(",ok,")).length).toBeGreaterThan(0);
+  });
+
   it("repeat runs on cached extractions give byte-identical output", async () => {
     quiet();
-    expect(await run(["run-set", INVOICES_DIR, "--out", out])).toBe(0);
+    expect(await run(["run-set", INVOICES_DIR, "--out", out])).toBe(1);
     const second = await tree(out);
     expect([...second.keys()].sort()).toEqual([...first.keys()].sort());
     for (const [k, v] of first) expect(second.get(k)?.equals(v), k).toBe(true);
@@ -80,6 +93,20 @@ describe("M1 exit criterion on the synthetic labeled set", () => {
     expect(failures).toEqual(expected);
     expect(report.status).toBe(expected.length && report.checks.some((c) => c.outcome === "fail" && c.severity === "blocking") ? "needs_review" : "ready_for_approval");
     expect(report.checks.every((c) => typeof c.ruleId === "string" && "row" in c && "page" in c)).toBe(true);
+  });
+
+  it("removes a stale lines.csv when a re-run becomes blocked", async () => {
+    quiet();
+    const work = await mkdtemp(join(tmpdir(), "cea-stale-"));
+    await cp(fixtureDir("clean-us-single-page"), join(work, "inv"), { recursive: true });
+    const args = ["run", join(work, "inv", "invoice.pdf"), "--skus", join(work, "inv", "sku-sheet.csv"), "--out", join(work, "out")];
+    expect(await run(args)).toBe(0);
+    expect(existsSync(join(work, "out", "lines.csv"))).toBe(true);
+    await writeFile(join(work, "inv", "sku-sheet.csv"), "sku,hts10\n");
+    await writeFile(join(work, "inv", "extractions", "page-001.json"), "not json");
+    expect(await run([...args, "--no-cache"])).toBe(1);
+    expect(existsSync(join(work, "out", "lines.csv"))).toBe(false);
+    expect(existsSync(join(work, "out", "lines.review.csv"))).toBe(true);
   });
 
   it("a page that fails extraction shows up in the report and blocks", async () => {
@@ -112,7 +139,10 @@ describe("cli", () => {
     const pdf = join(fixtureDir("clean-us-single-page"), "invoice.pdf");
     expect(selectProvider("auto", pdf, undefined, {}).id).toBe("fixture");
     expect(() => selectProvider("auto", "/nowhere/invoice.pdf", undefined, {})).toThrow(/OPENAI_API_KEY/);
-    expect(() => selectProvider("openai", pdf, undefined, {})).toThrow(/OPENAI_API_KEY/);
-    expect(selectProvider("openai", pdf, undefined, { OPENAI_API_KEY: "k", CEA_OPENAI_MODEL: "m" }).id).toBe("openai");
+    expect(() => selectProvider("openai", pdf, undefined, {})).toThrow(/zero data retention/);
+    expect(() => selectProvider("openai", pdf, undefined, { OPENAI_API_KEY: "k", CEA_OPENAI_MODEL: "m" })).toThrow(/zero data retention/);
+    expect(
+      selectProvider("openai", pdf, undefined, { OPENAI_API_KEY: "k", CEA_OPENAI_MODEL: "m", CEA_PROVIDER_ZERO_RETENTION: "confirmed", CEA_PROVIDER_REGION: "us" }).id,
+    ).toBe("openai");
   });
 });

@@ -25,7 +25,11 @@ stages: ${STAGES.join(", ")}
 --provider auto (default) uses recorded extractions when <pdf dir>/extractions exists
 (or --fixture-dir is given), otherwise OpenAI (OPENAI_API_KEY + CEA_OPENAI_MODEL).
 run-set expects one folder per invoice containing invoice.pdf and sku-sheet.csv|xlsx.
-exit codes: 0 ready_for_approval, 1 needs_review or failed, 2 usage or fatal error.`;
+Without blocking findings the lines go to lines.csv. With any blocking finding only
+lines.review.csv is written (affected rows marked needs_review) and the exit code is 1.
+Real providers also need CEA_PROVIDER_ZERO_RETENTION=confirmed and CEA_PROVIDER_REGION=us,
+set only after verifying the account's contract terms.
+exit codes: 0 ready_for_approval, 1 needs_review or failed (run-set: any invoice), 2 usage or fatal error.`;
 
 class UsageError extends Error {}
 
@@ -65,6 +69,7 @@ function printResult(pdfPath: string, outDir: string, result: PipelineResult, pr
     console.log(`  ${isBlockingFailure(c) ? "BLOCKING" : "warning "} ${c.ruleId}${where ? ` (${where})` : ""}: ${c.message}`);
   }
   if (fails.length > 20) console.log(`  ... ${fails.length - 20} more in report.json`);
+  console.log(`  wrote report.json and ${result.linesFile}${result.linesFile === "lines.review.csv" ? " (blocking findings; no lines.csv)" : ""}`);
 }
 
 async function runOne(
@@ -135,7 +140,7 @@ export async function run(argv: string[]): Promise<number> {
       }
       console.log(`\n${statuses.length} invoice(s):`);
       for (const [name, status] of statuses) console.log(`  ${status.padEnd(18)} ${name}`);
-      return 0;
+      return statuses.every(([, status]) => status === "ready_for_approval") ? 0 : 1;
     }
     console.log(USAGE);
     return command === undefined || command === "help" || command === "--help" ? 0 : 2;

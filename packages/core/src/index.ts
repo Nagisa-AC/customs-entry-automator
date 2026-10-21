@@ -11,10 +11,7 @@ export * from "./extract/extract.ts";
 export * from "./extract/stitch.ts";
 export * from "./extract/providers/fixture.ts";
 export * from "./extract/providers/openai.ts";
-<<<<<<< HEAD
 export * from "./extract/providers/data-terms.ts";
-=======
 export * from "./catalog.ts";
 export * from "./export.ts";
 export * from "./pipeline.ts";
->>>>>>> d42d855 (Add SKU sheet matching, lines.csv/report.json export and the cea CLI)

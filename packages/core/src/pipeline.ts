@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { CATALOG_MATCHER_VERSION, loadCatalog, matchCatalog, type MatchResult } from "./catalog.ts";
 import type { CheckResult } from "./checks.ts";
@@ -49,6 +49,8 @@ export interface PipelineResult {
   /** Pages whose extraction came from the saved raw cache vs. a provider call (this run only). */
   cachedPages: number;
   calledPages: number;
+  /** lines.csv when nothing blocks; lines.review.csv otherwise. Never both. */
+  linesFile: "lines.csv" | "lines.review.csv";
 }
 
 const pad = (n: number) => String(n).padStart(3, "0");
@@ -69,7 +71,9 @@ export const PIPELINE_VERSIONS = {
 /**
  * Run the M1 pipeline. Each stage writes its output under `outDir`:
  * pages/ → extract/ → stitched.json → normalized.json → checks.json →
- * matched.json → lines.csv + report.json.
+ * matched.json → report.json + lines.csv, or lines.review.csv when any
+ * blocking finding exists (lines.csv is then never written, and a stale one
+ * from an earlier run is removed).
  */
 export async function runPipeline(opts: PipelineOptions): Promise<PipelineResult> {
   const { outDir, provider } = opts;
@@ -84,6 +88,7 @@ export async function runPipeline(opts: PipelineOptions): Promise<PipelineResult
     checks: join(outDir, "checks.json"),
     matched: join(outDir, "matched.json"),
     csv: join(outDir, "lines.csv"),
+    reviewCsv: join(outDir, "lines.review.csv"),
     report: join(outDir, "report.json"),
   };
   await mkdir(outDir, { recursive: true });
@@ -184,8 +189,11 @@ export async function runPipeline(opts: PipelineOptions): Promise<PipelineResult
     matched: matched.lines.filter((l) => l.match.status === "matched").length,
     checks,
   });
-  await writeFile(paths.csv, toLinesCsv(matched.lines, normalized.header.currency, checks));
+  const blocked = report.summary.blocking > 0;
+  const [target, stale] = blocked ? [paths.reviewCsv, paths.csv] : [paths.csv, paths.reviewCsv];
+  await rm(stale, { force: true });
+  await writeFile(target, toLinesCsv(matched.lines, normalized.header.currency, checks));
   await writeJson(paths.report, report);
 
-  return { report, cachedPages, calledPages };
+  return { report, cachedPages, calledPages, linesFile: blocked ? "lines.review.csv" : "lines.csv" };
 }
