@@ -9,7 +9,7 @@ function matched(overrides: Parameters<typeof line>[0] = {}): MatchedLine[] {
 }
 
 const fail = (row: number, severity: "blocking" | "warning" = "blocking"): CheckResult => ({
-  ruleId: "line-math", ruleVersion: "1", severity, outcome: "fail", row, page: 1, field: null, expected: null, actual: null, message: "",
+  ruleId: "R1-line-math", ruleVersion: "2", severity, outcome: "fail", row, page: 1, field: null, expected: null, actual: null, message: "",
 });
 
 describe("escapeFormula", () => {
@@ -38,10 +38,10 @@ describe("toLinesCsv", () => {
   });
 
   it("marks rows with blocking failures as needs_review and lists issues", () => {
-    const csv = toLinesCsv(matched(), "USD", [fail(1), { ...fail(1, "warning"), ruleId: "required-fields" }]);
-    expect(csv.split("\r\n")[1]).toMatch(/,needs_review,line-math;required-fields\(warning\)$/);
+    const csv = toLinesCsv(matched(), "USD", [fail(1), { ...fail(1, "warning"), ruleId: "R4-sku-match" }]);
+    expect(csv.split("\r\n")[1]).toMatch(/,needs_review,R1-line-math;R4-sku-match\(warning\)$/);
     const warnOnly = toLinesCsv(matched(), "USD", [fail(1, "warning")]);
-    expect(warnOnly.split("\r\n")[1]).toMatch(/,ok,line-math\(warning\)$/);
+    expect(warnOnly.split("\r\n")[1]).toMatch(/,ok,R1-line-math\(warning\)$/);
   });
 });
 

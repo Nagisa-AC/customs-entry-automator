@@ -5,6 +5,7 @@ import { basename, extname } from "node:path";
 import { readSheet } from "read-excel-file/node";
 import type { CheckResult } from "./checks.ts";
 import { normalizeSku, type NormalizedDocument, type NormalizedLine } from "./normalizer.ts";
+import { RULE_IDS } from "./rules.ts";
 
 export const CATALOG_MATCHER_VERSION = "catalog-exact-v1";
 
@@ -144,28 +145,31 @@ export interface MatchResult {
   checks: CheckResult[];
 }
 
-/** Exact match on normalized SKU. Unmatched and ambiguous lines are blocking. */
+/**
+ * R4: exact match on normalized SKU. Unmatched and ambiguous lines are a
+ * warning: the row is exported with no HTS rather than blocking the invoice.
+ */
 export function matchCatalog(doc: NormalizedDocument, catalog: Catalog): MatchResult {
   const checks: CheckResult[] = [];
-  const base = { ruleId: "catalog-match", ruleVersion: "1", field: "sku" } as const;
+  const base = { ruleId: RULE_IDS.skuMatch, ruleVersion: "2", severity: "warning", field: "sku" } as const;
   const lines = doc.lines.map((line): MatchedLine => {
     const where = { row: line.row, page: line.page };
     if (!line.sku) {
-      checks.push({ ...base, ...where, severity: "blocking", outcome: "skipped", expected: null, actual: null, message: "Skipped: line has no SKU." });
+      checks.push({ ...base, ...where, outcome: "skipped", expected: null, actual: null, message: "Skipped: line has no SKU (see R5)." });
       return { ...line, match: { status: "no-sku", hts10: null, htsSource: null, sheetRow: null } };
     }
     const found = catalog.entries.get(line.sku) ?? [];
     const distinct = [...new Set(found.map((e) => e.hts10))];
     if (found.length === 0) {
-      checks.push({ ...base, ...where, severity: "blocking", outcome: "fail", expected: "SKU in importer catalog", actual: line.sku, message: `SKU ${line.sku} is not in the SKU sheet. Add an approved mapping or classify this line manually.` });
+      checks.push({ ...base, ...where, outcome: "fail", expected: "SKU in importer catalog", actual: line.sku, message: `SKU ${line.sku} is not in the SKU sheet, so this row has no HTS. Add an approved mapping or classify this line manually.` });
       return { ...line, match: { status: "unmatched", hts10: null, htsSource: null, sheetRow: null } };
     }
     if (distinct.length > 1) {
-      checks.push({ ...base, ...where, severity: "blocking", outcome: "fail", expected: "one HTS mapping", actual: `${distinct.join(" / ")} (sheet rows ${found.map((e) => e.sheetRow).join(", ")})`, message: `SKU ${line.sku} maps to more than one HTS code in the SKU sheet. Resolve the mapping before use.` });
+      checks.push({ ...base, ...where, outcome: "fail", expected: "one HTS mapping", actual: `${distinct.join(" / ")} (sheet rows ${found.map((e) => e.sheetRow).join(", ")})`, message: `SKU ${line.sku} maps to more than one HTS code in the SKU sheet. This row has no HTS until the mapping is resolved.` });
       return { ...line, match: { status: "ambiguous", hts10: null, htsSource: null, sheetRow: null } };
     }
     const entry = found[0] as CatalogEntry;
-    checks.push({ ...base, ...where, severity: "blocking", outcome: "pass", expected: "SKU in importer catalog", actual: line.sku, message: `Matched sheet row ${entry.sheetRow}.` });
+    checks.push({ ...base, ...where, outcome: "pass", expected: "SKU in importer catalog", actual: line.sku, message: `Matched sheet row ${entry.sheetRow}.` });
     return { ...line, match: { status: "matched", hts10: entry.hts10, htsSource: "catalog-matched", sheetRow: entry.sheetRow } };
   });
   return { lines, checks };

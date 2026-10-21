@@ -68,20 +68,21 @@ describe("matchCatalog", () => {
     expect(checks.every((c) => c.outcome === "pass")).toBe(true);
   });
 
-  it("flags unmatched SKUs as blocking; no fuzzy matching", async () => {
+  it("warns (R4) on unmatched SKUs; no fuzzy matching", async () => {
     const c = await loadCatalog(await sheet("s.csv", CSV));
     const doc = cleanDoc();
     doc.lines = [line({ sku: "AB-1OO" })];
     const { lines, checks } = matchCatalog(normalizeDocument(doc), c);
     expect(lines[0]!.match.status).toBe("unmatched");
-    expect(checks[0]).toMatchObject({ ruleId: "catalog-match", severity: "blocking", outcome: "fail", row: 1, page: 1, actual: "AB-1OO" });
+    expect(lines[0]!.match.hts10).toBeNull();
+    expect(checks[0]).toMatchObject({ ruleId: "R4-sku-match", severity: "warning", outcome: "fail", row: 1, page: 1, actual: "AB-1OO" });
   });
 
   it("flags SKUs with conflicting HTS rows as ambiguous", async () => {
     const c = await loadCatalog(await sheet("s.csv", "sku,hts\nAB-100,7326908688\nab-100,7326908600\n"));
     const { lines, checks } = matchCatalog(normalizeDocument(cleanDoc()), c);
     expect(lines[0]!.match.status).toBe("ambiguous");
-    expect(checks[0]).toMatchObject({ outcome: "fail", severity: "blocking", actual: "7326908688 / 7326908600 (sheet rows 2, 3)" });
+    expect(checks[0]).toMatchObject({ outcome: "fail", severity: "warning", actual: "7326908688 / 7326908600 (sheet rows 2, 3)" });
   });
 
   it("skips lines with no SKU", async () => {

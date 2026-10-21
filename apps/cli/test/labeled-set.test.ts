@@ -87,7 +87,7 @@ describe("M1 exit criterion on the synthetic labeled set", () => {
     const gt = JSON.parse(await readFile(join(fixtureDir(name), "ground-truth.json"), "utf8")) as GroundTruth;
     const expected = [
       ...gt.expectedFailures,
-      ...gt.lines.filter((l) => l.hts10 === null).map((l) => ({ ruleId: "catalog-match", row: l.row })),
+      ...gt.lines.filter((l) => l.hts10 === null).map((l) => ({ ruleId: "R4-sku-match", row: l.row })),
     ];
     const failures = report.checks.filter((c) => c.outcome === "fail").map((c) => ({ ruleId: c.ruleId, row: c.row }));
     expect(failures).toEqual(expected);
@@ -109,6 +109,21 @@ describe("M1 exit criterion on the synthetic labeled set", () => {
     expect(existsSync(join(work, "out", "lines.review.csv"))).toBe(true);
   });
 
+  it("an unmatched SKU alone is a warning: lines.csv is written with no HTS on that row", async () => {
+    quiet();
+    const work = await mkdtemp(join(tmpdir(), "cea-r4-"));
+    await cp(fixtureDir("clean-us-single-page"), join(work, "inv"), { recursive: true });
+    const sheet = (await readFile(join(work, "inv", "sku-sheet.csv"), "utf8")).split("\n");
+    await writeFile(join(work, "inv", "sku-sheet.csv"), sheet.filter((_, i) => i !== 1).join("\n"));
+    const code = await run(["run", join(work, "inv", "invoice.pdf"), "--skus", join(work, "inv", "sku-sheet.csv"), "--out", join(work, "out")]);
+    expect(code).toBe(0);
+    const report = JSON.parse(await readFile(join(work, "out", "report.json"), "utf8")) as Report;
+    expect(report.status).toBe("ready_for_approval");
+    const csv = (await readFile(join(work, "out", "lines.csv"), "utf8")).split("\r\n");
+    expect(csv[1]).toMatch(/,,,ok,R4-sku-match\(warning\)$/);
+    expect(existsSync(join(work, "out", "lines.review.csv"))).toBe(false);
+  });
+
   it("a page that fails extraction shows up in the report and blocks", async () => {
     quiet();
     const work = await mkdtemp(join(tmpdir(), "cea-fail-"));
@@ -120,9 +135,9 @@ describe("M1 exit criterion on the synthetic labeled set", () => {
     const report = JSON.parse(await readFile(join(work, "out", "report.json"), "utf8")) as Report;
     expect(report.status).toBe("needs_review");
     expect(report.extraction.pages.map((p) => p.status)).toEqual(["extracted", "failed", "extracted"]);
-    const continuity = report.checks.filter((c) => c.ruleId === "page-continuity" && c.outcome === "fail");
+    const continuity = report.checks.filter((c) => c.ruleId === "R7-page-continuity" && c.outcome === "fail");
     expect(continuity.some((c) => c.page === 2 && c.row === null)).toBe(true);
-    expect(report.checks.find((c) => c.ruleId === "invoice-total")?.outcome).not.toBe("pass");
+    expect(report.checks.find((c) => c.ruleId === "R2-footer-total")?.outcome).not.toBe("pass");
   });
 });
 
