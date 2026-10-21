@@ -31,6 +31,7 @@ describe("normalizeDocument", () => {
     const doc = cleanDoc();
     doc.header.invoiceTotal = "1.525,00 EUR";
     doc.header.currency = "EUR";
+    doc.header.totalGrossWeight = "412,5 kg";
     doc.lines = [
       line({ quantity: "10", unitPrice: "2,50", extendedPrice: "25,00" }),
       line({ rowOnPage: 2, sku: "AB-200", quantity: "1.000", unitPrice: "1,25", extendedPrice: "1.250,00" }),
@@ -40,11 +41,14 @@ describe("normalizeDocument", () => {
     expect(n.decimalFormat).toBe("comma");
     expect(n.lines.map((l) => l.quantity?.value)).toEqual(["10", "1000", "100"]);
     expect(n.header.invoiceTotal?.value).toBe("1525");
+    expect(n.header.totalGrossWeight).toEqual({ raw: "412,5 kg", value: "412.5", scale: 1, unit: "KG" });
   });
 
   it("reports an unknown format as a blocking finding", () => {
     const doc = cleanDoc();
     doc.header.invoiceTotal = "1,525";
+    doc.header.totalGrossWeight = null;
+    doc.header.totalNetWeight = null;
     doc.lines = [line({ quantity: "1", unitPrice: "1,525", extendedPrice: "1,525" })];
     const n = normalizeDocument(doc);
     expect(n.decimalFormat).toBeNull();
@@ -70,5 +74,25 @@ describe("normalizeDocument", () => {
     expect(n.lines[0]!.countryOfOrigin).toBeNull();
     expect(n.lines[0]!.unitOfMeasure).toBeNull();
     expect(n.findings.filter((f) => f.ruleId === "parse-number")).toEqual([]);
+  });
+
+  it("parses weights with their unit and counts them toward the decimal format", () => {
+    const doc = cleanDoc();
+    doc.header.totalGrossWeight = "2,760 LBS.";
+    doc.header.totalNetWeight = "1250.5kg";
+    const n = normalizeDocument(doc);
+    expect(n.header.totalGrossWeight).toEqual({ raw: "2,760 LBS.", value: "2760", scale: 0, unit: "LB" });
+    expect(n.header.totalNetWeight).toMatchObject({ value: "1250.5", unit: "KG" });
+    expect(n.header.incoterms).toBe("FOB Ningbo");
+  });
+
+  it("keeps a unitless weight and reports an unknown unit as blocking", () => {
+    const doc = cleanDoc();
+    doc.header.totalGrossWeight = "412.5";
+    doc.header.totalNetWeight = "380 cartons";
+    const n = normalizeDocument(doc);
+    expect(n.header.totalGrossWeight).toMatchObject({ value: "412.5", unit: null });
+    expect(n.header.totalNetWeight).toBeNull();
+    expect(n.findings.find((f) => f.ruleId === "parse-weight")).toMatchObject({ severity: "blocking", field: "totalNetWeight", actual: "380 cartons" });
   });
 });

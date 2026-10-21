@@ -11,13 +11,46 @@ export interface Amount {
   scale: number;
 }
 
+export type WeightUnit = "KG" | "G" | "LB" | "MT";
+
+/** A printed weight: the number parsed like any amount, the unit kept separately. */
+export interface Weight extends Amount {
+  unit: WeightUnit | null;
+}
+
+const WEIGHT_UNITS: readonly [RegExp, WeightUnit][] = [
+  [/^(?:KGS?|KILOS?|KILOGRAMS?)$/, "KG"],
+  [/^(?:G|GR|GRAMS?)$/, "G"],
+  [/^(?:LBS?|POUNDS?)$/, "LB"],
+  [/^(?:MT|TONNES?)$/, "MT"],
+];
+
+interface SplitWeight {
+  number: string;
+  unitText: string | null;
+}
+
+/** "1.250,5 kg" -> number "1.250,5", unit "kg". A trailing word is the unit. */
+function splitWeight(raw: string): SplitWeight {
+  const m = /^(.*?\d)\s*([A-Za-z][A-Za-z.]*)$/.exec(raw.trim());
+  return m?.[1] && m[2] ? { number: m[1], unitText: m[2] } : { number: raw.trim(), unitText: null };
+}
+
+function weightUnit(unitText: string): WeightUnit | null {
+  const u = unitText.replace(/\./g, "").toUpperCase();
+  return WEIGHT_UNITS.find(([re]) => re.test(u))?.[1] ?? null;
+}
+
 export interface NormalizedHeader {
   invoiceNumber: string | null;
   invoiceDate: string | null;
   currency: string | null;
   sellerName: string | null;
   buyerName: string | null;
+  incoterms: string | null;
   invoiceTotal: Amount | null;
+  totalGrossWeight: Weight | null;
+  totalNetWeight: Weight | null;
 }
 
 export interface NormalizedLine {
@@ -69,6 +102,9 @@ function collectNumericRaws(doc: DocumentExtraction): string[] {
     if (text(v) !== null) raws.push(v as string);
   };
   push(doc.header.invoiceTotal);
+  for (const w of [doc.header.totalGrossWeight, doc.header.totalNetWeight]) {
+    if (text(w) !== null) push(splitWeight(w as string).number);
+  }
   for (const line of doc.lines) {
     push(line.quantity);
     push(line.unitPrice);
@@ -123,13 +159,40 @@ export function normalizeDocument(doc: DocumentExtraction): NormalizedDocument {
     return null;
   };
 
+  const weight = (raw: string | null, field: string): Weight | null => {
+    const t = text(raw);
+    if (t === null) return null;
+    const { number, unitText } = splitWeight(t);
+    const unit = unitText === null ? null : weightUnit(unitText);
+    if (unitText !== null && unit === null) {
+      findings.push({
+        ruleId: "parse-weight",
+        ruleVersion: "1",
+        severity: "blocking",
+        outcome: "fail",
+        row: null,
+        page: null,
+        field,
+        expected: "weight in kg, g, lb or MT",
+        actual: t,
+        message: `Weight unit "${unitText}" is not recognised. Confirm the weight and unit on the source.`,
+      });
+      return null;
+    }
+    const parsed = amount(number, field, false, { row: null, page: null });
+    return parsed === null ? null : { ...parsed, raw: t, unit };
+  };
+
   const header: NormalizedHeader = {
     invoiceNumber: text(doc.header.invoiceNumber),
     invoiceDate: text(doc.header.invoiceDate),
     currency: text(doc.header.currency)?.toUpperCase() ?? null,
     sellerName: text(doc.header.sellerName),
     buyerName: text(doc.header.buyerName),
+    incoterms: text(doc.header.incoterms),
     invoiceTotal: amount(doc.header.invoiceTotal, "invoiceTotal", true, { row: null, page: null }),
+    totalGrossWeight: weight(doc.header.totalGrossWeight, "totalGrossWeight"),
+    totalNetWeight: weight(doc.header.totalNetWeight, "totalNetWeight"),
   };
 
   const lines = doc.lines.map((line, i): NormalizedLine => {

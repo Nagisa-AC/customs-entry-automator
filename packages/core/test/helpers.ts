@@ -33,7 +33,10 @@ export function cleanDoc(): DocumentExtraction {
       currency: "USD",
       sellerName: "Example Supplier Co.",
       buyerName: "Example Importer LLC",
+      incoterms: "FOB Ningbo",
       invoiceTotal: "$1,525.00",
+      totalGrossWeight: "412.5 KG",
+      totalNetWeight: "380 KG",
     },
     lines: [
       line(),

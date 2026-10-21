@@ -1,14 +1,26 @@
 import Decimal from "decimal.js";
 import type { CheckResult, Severity } from "./checks.ts";
-import type { Amount, NormalizedDocument, NormalizedLine } from "./normalizer.ts";
+import type { Amount, NormalizedDocument, NormalizedLine, Weight, WeightUnit } from "./normalizer.ts";
 
 /**
- * The six v0 validation rules. Each is deterministic, never mutates the
- * document, and returns at least one result so the report shows it ran.
+ * The v0 validation rules (R1–R3 and R5–R7; R4, SKU match, runs in the
+ * catalog stage). Each is deterministic, never mutates the document, and
+ * returns at least one result so the report shows it ran. Severity "blocking"
+ * is the design's Fail; "warning" is its Warn.
  * Convention: `expected` is what code computed or requires; `actual` is what
  * the document says.
  */
-export const RULE_SET_VERSION = "v0.1";
+export const RULE_SET_VERSION = "v0.2";
+
+export const RULE_IDS = {
+  lineMath: "R1-line-math",
+  footerTotal: "R2-footer-total",
+  weights: "R3-weights",
+  skuMatch: "R4-sku-match",
+  requiredFields: "R5-required-fields",
+  duplicateLines: "R6-duplicate-lines",
+  pageContinuity: "R7-page-continuity",
+} as const;
 
 export interface Rule {
   id: string;
@@ -17,11 +29,8 @@ export interface Rule {
   run(doc: NormalizedDocument): CheckResult[];
 }
 
-/** ISO 4217 codes accepted in v0. Anything else routes to review; nothing is converted. */
-export const SUPPORTED_CURRENCIES: ReadonlySet<string> = new Set([
-  "USD", "EUR", "GBP", "CNY", "JPY", "CAD", "MXN", "KRW", "TWD", "HKD",
-  "INR", "VND", "THB", "IDR", "MYR", "PHP", "AUD", "CHF", "SGD", "TRY",
-]);
+/** One cent in the invoice currency. */
+export const CENT = new Decimal("0.01");
 
 function dec(a: Amount): Decimal {
   return new Decimal(a.value);
@@ -44,96 +53,41 @@ function maker(rule: { id: string; version: string }, defaultSeverity: Severity)
   });
 }
 
-const REQUIRED_HEADER = ["invoiceNumber", "invoiceTotal"] as const;
-const REQUIRED_LINE = ["sku", "description", "quantity", "unitPrice", "extendedPrice"] as const;
-
-export const requiredFields: Rule = {
-  id: "required-fields",
-  version: "1",
-  description: "Header and line fields needed to build an entry are present and readable.",
-  run(doc) {
-    const r = maker(this, "blocking");
-    const out: CheckResult[] = [];
-    const missingHeader = REQUIRED_HEADER.filter((f) => doc.header[f] === null);
-    out.push(
-      r({
-        outcome: missingHeader.length ? "fail" : "pass",
-        row: null,
-        page: null,
-        field: missingHeader.join(",") || null,
-        expected: REQUIRED_HEADER.join(","),
-        actual: missingHeader.length ? `missing: ${missingHeader.join(",")}` : "all present",
-        message: missingHeader.length
-          ? `Invoice header is missing or has unreadable ${missingHeader.join(", ")}. Enter from the source document.`
-          : "Required header fields present.",
-      }),
-    );
-    for (const line of doc.lines) {
-      const missing = REQUIRED_LINE.filter((f) => line[f] === null);
-      out.push(
-        r({
-          outcome: missing.length ? "fail" : "pass",
-          row: line.row,
-          page: line.page,
-          field: missing.join(",") || null,
-          expected: REQUIRED_LINE.join(","),
-          actual: missing.length ? `missing: ${missing.join(",")}` : "all present",
-          message: missing.length
-            ? `Line is missing or has unreadable ${missing.join(", ")}.`
-            : "Required line fields present.",
-        }),
-      );
-      if (line.countryOfOrigin === null) {
-        out.push(
-          r({
-            severity: "warning",
-            outcome: "fail",
-            row: line.row,
-            page: line.page,
-            field: "countryOfOrigin",
-            expected: "country of origin",
-            actual: null,
-            message: "No country of origin printed on this line; supply it from the catalog or the importer.",
-          }),
-        );
-      }
-    }
-    return out;
-  },
-};
-
 export const lineMath: Rule = {
-  id: "line-math",
-  version: "1",
-  description: "quantity × unit price equals extended price, rounded half-up to the printed precision.",
+  id: RULE_IDS.lineMath,
+  version: "2",
+  description: "quantity × unit price equals extended price within 0.01.",
   run(doc) {
     const r = maker(this, "blocking");
     return doc.lines.map((line) => {
       const base = { row: line.row, page: line.page, field: "extendedPrice" };
-      if (!line.quantity || !line.unitPrice || !line.extendedPrice) {
-        return r({ ...base, outcome: "skipped", expected: null, actual: null, message: "Skipped: quantity, unit price or extended price missing." });
+      if (!line.quantity || !line.unitPrice) {
+        return r({ ...base, outcome: "skipped", expected: null, actual: null, message: "Skipped: quantity or unit price missing (see R5)." });
       }
-      const scale = line.extendedPrice.scale;
-      const expected = dec(line.quantity).times(dec(line.unitPrice)).toDecimalPlaces(scale, Decimal.ROUND_HALF_UP);
+      const expected = dec(line.quantity).times(dec(line.unitPrice));
+      if (!line.extendedPrice) {
+        return r({ ...base, outcome: "fail", expected: expected.toFixed(), actual: null, message: "No readable extended price, so the line can't be verified. Enter it from the source." });
+      }
       const actual = dec(line.extendedPrice);
-      const ok = expected.eq(actual);
+      const diff = actual.minus(expected);
+      const ok = diff.abs().lte(CENT);
       return r({
         ...base,
         outcome: ok ? "pass" : "fail",
-        expected: expected.toFixed(scale),
-        actual: actual.toFixed(scale),
+        expected: expected.toFixed(),
+        actual: actual.toFixed(line.extendedPrice.scale),
         message: ok
-          ? "Line math matches."
-          : `${line.quantity.raw} × ${line.unitPrice.raw} = ${expected.toFixed(scale)}, but the line shows ${line.extendedPrice.raw} (difference ${actual.minus(expected).toFixed(scale)}). Check quantity, price and extended price on the source.`,
+          ? "Line math matches within 0.01."
+          : `${line.quantity.raw} × ${line.unitPrice.raw} = ${expected.toFixed()}, but the line shows ${line.extendedPrice.raw} (difference ${diff.toFixed()}). Check quantity, price and extended price on the source.`,
       });
     });
   },
 };
 
-export const invoiceTotal: Rule = {
-  id: "invoice-total",
+export const footerTotal: Rule = {
+  id: RULE_IDS.footerTotal,
   version: "1",
-  description: "Sum of extended prices equals the printed invoice total.",
+  description: "Sum of extended prices equals the printed total within 0.01 × line count.",
   run(doc) {
     const r = maker(this, "blocking");
     const base = { row: null, page: null, field: "invoiceTotal" };
@@ -143,10 +97,12 @@ export const invoiceTotal: Rule = {
     }
     const missing = doc.lines.filter((l) => !l.extendedPrice).map((l) => l.row);
     if (missing.length) {
-      return [r({ ...base, outcome: "skipped", expected: null, actual: total.value, message: `Skipped: rows ${missing.join(", ")} have no extended price.` })];
+      return [r({ ...base, outcome: "skipped", expected: null, actual: total.value, message: `Skipped: rows ${missing.join(", ")} have no extended price (see R1).` })];
     }
     const sum = doc.lines.reduce((acc, l) => acc.plus(dec(l.extendedPrice as Amount)), new Decimal(0));
-    const ok = sum.eq(dec(total));
+    const tolerance = CENT.times(doc.lines.length);
+    const diff = dec(total).minus(sum);
+    const ok = diff.abs().lte(tolerance);
     const scale = Math.max(total.scale, ...doc.lines.map((l) => (l.extendedPrice as Amount).scale));
     return [
       r({
@@ -155,55 +111,138 @@ export const invoiceTotal: Rule = {
         expected: sum.toFixed(scale),
         actual: dec(total).toFixed(scale),
         message: ok
-          ? "Lines sum to the invoice total."
-          : `Lines sum to ${sum.toFixed(scale)} but the invoice total is ${total.raw} (difference ${dec(total).minus(sum).toFixed(scale)}). Look for missing, duplicated or misread lines, or unsupported charges such as freight or discounts.`,
+          ? `Lines sum to the invoice total within ${tolerance.toFixed(2)}.`
+          : `Lines sum to ${sum.toFixed(scale)} but the invoice total is ${total.raw} (difference ${diff.toFixed(scale)}, tolerance ${tolerance.toFixed(2)}). Assume a row was missed or misread before blaming the invoice; also look for freight, discounts or other charges.`,
       }),
     ];
   },
 };
 
-function lineKey(l: NormalizedLine): string | null {
-  if (!l.sku) return null;
-  return JSON.stringify([l.sku, l.description, l.quantity?.value, l.unitPrice?.value, l.extendedPrice?.value]);
+/** Exact conversion factors to kilograms. */
+const KG_PER_UNIT: Record<WeightUnit, Decimal> = {
+  KG: new Decimal(1),
+  G: new Decimal("0.001"),
+  LB: new Decimal("0.45359237"),
+  MT: new Decimal(1000),
+};
+
+export const weights: Rule = {
+  id: RULE_IDS.weights,
+  version: "1",
+  description: "Total net weight is not more than total gross weight.",
+  run(doc) {
+    const r = maker(this, "blocking");
+    const base = { row: null, page: null, field: "totalNetWeight" };
+    const gross = doc.header.totalGrossWeight;
+    const net = doc.header.totalNetWeight;
+    if (!gross || !net) {
+      const unreadable = (["totalGrossWeight", "totalNetWeight"] as const).filter((f) => doc.header[f] === null && doc.rawHeader[f]?.trim());
+      if (unreadable.length) {
+        return [r({ ...base, outcome: "skipped", expected: null, actual: null, message: `Skipped: ${unreadable.join(" and ")} could not be read (see parse findings).` })];
+      }
+      const absent = [!gross && "gross", !net && "net"].filter(Boolean).join(" and ");
+      return [
+        r({
+          ...base,
+          severity: "warning",
+          outcome: "fail",
+          expected: "net and gross weight",
+          actual: `no ${absent} weight printed`,
+          message: `The invoice prints no total ${absent} weight, so net ≤ gross can't be checked. Take weights from the packing list.`,
+        }),
+      ];
+    }
+    if ((gross.unit === null) !== (net.unit === null)) {
+      return [
+        r({
+          ...base,
+          outcome: "fail",
+          expected: "both weights with a unit, or both without",
+          actual: `gross ${gross.raw}, net ${net.raw}`,
+          message: "Only one of the weights has a unit, so they can't be compared. Confirm the units on the source.",
+        }),
+      ];
+    }
+    const inKg = (w: Weight) => (w.unit === null ? dec(w) : dec(w).times(KG_PER_UNIT[w.unit]));
+    const sameUnit = gross.unit === net.unit;
+    const g = sameUnit ? dec(gross) : inKg(gross);
+    const n = sameUnit ? dec(net) : inKg(net);
+    const unitLabel = sameUnit ? (gross.unit ?? "") : "KG";
+    const ok = n.lte(g);
+    return [
+      r({
+        ...base,
+        outcome: ok ? "pass" : "fail",
+        expected: `≤ ${g.toFixed()} ${unitLabel}`.trim(),
+        actual: `${n.toFixed()} ${unitLabel}`.trim(),
+        message: ok
+          ? "Net weight does not exceed gross weight."
+          : `Net weight ${net.raw} is more than gross weight ${gross.raw}. One of them is misread or the two are swapped; check the source.`,
+      }),
+    ];
+  },
+};
+
+const REQUIRED_LINE = ["sku", "quantity", "unitPrice", "countryOfOrigin"] as const;
+
+export const requiredFields: Rule = {
+  id: RULE_IDS.requiredFields,
+  version: "2",
+  description: "Every line has SKU, quantity, unit price and country of origin.",
+  run(doc) {
+    const r = maker(this, "blocking");
+    return doc.lines.map((line) => {
+      const missing = REQUIRED_LINE.filter((f) => line[f] === null);
+      return r({
+        outcome: missing.length ? "fail" : "pass",
+        row: line.row,
+        page: line.page,
+        field: missing.join(",") || null,
+        expected: REQUIRED_LINE.join(","),
+        actual: missing.length ? `missing: ${missing.join(",")}` : "all present",
+        message: missing.length
+          ? `Line is missing or has unreadable ${missing.join(", ")}. Enter from the source document.`
+          : "Required line fields present.",
+      });
+    });
+  },
+};
+
+function samePriceAndSku(a: NormalizedLine, b: NormalizedLine): boolean {
+  return a.sku !== null && a.sku === b.sku && a.unitPrice !== null && b.unitPrice !== null && dec(a.unitPrice).eq(dec(b.unitPrice));
 }
 
 export const duplicateLines: Rule = {
-  id: "duplicate-lines",
-  version: "1",
-  description: "No two lines share SKU, description, quantity and prices.",
+  id: RULE_IDS.duplicateLines,
+  version: "2",
+  description: "The same SKU and unit price do not appear on both sides of a page break.",
   run(doc) {
-    const r = maker(this, "blocking");
-    const seen = new Map<string, NormalizedLine>();
+    const r = maker(this, "warning");
     const out: CheckResult[] = [];
-    for (const line of doc.lines) {
-      const key = lineKey(line);
-      if (key === null) continue;
-      const first = seen.get(key);
-      if (first) {
-        out.push(
-          r({
-            outcome: "fail",
-            row: line.row,
-            page: line.page,
-            field: null,
-            expected: "unique line",
-            actual: `duplicate of row ${first.row} (page ${first.page})`,
-            message: `Row ${line.row} repeats row ${first.row} exactly. Confirm on the source whether it is a real second line or a duplicated read.`,
-          }),
-        );
-      } else {
-        seen.set(key, line);
-      }
-    }
+    doc.lines.forEach((line, i) => {
+      const prev = doc.lines[i - 1];
+      if (!prev || line.page !== prev.page + 1 || !samePriceAndSku(prev, line)) return;
+      out.push(
+        r({
+          outcome: "fail",
+          row: line.row,
+          page: line.page,
+          field: null,
+          expected: "distinct rows across the page break",
+          actual: `same SKU ${line.sku} and unit price as row ${prev.row} (page ${prev.page})`,
+          message: `The first row on page ${line.page} repeats the SKU and price of the last row on page ${prev.page}. It is likely a split or carried-forward row; confirm on the source whether it is a real second line.`,
+        }),
+      );
+    });
     if (!out.length) {
-      out.push(r({ outcome: "pass", row: null, page: null, field: null, expected: "unique lines", actual: "no duplicates", message: "No duplicate lines." }));
+      out.push(r({ outcome: "pass", row: null, page: null, field: null, expected: "distinct rows across page breaks", actual: "no repeats", message: "No SKU and price repeated across a page break." }));
     }
     return out;
   },
 };
 
 export const pageContinuity: Rule = {
-  id: "page-continuity",
+  id: RULE_IDS.pageContinuity,
   version: "1",
   description: "Every page was extracted, lines reference real pages, and no split row is left unmerged.",
   run(doc) {
@@ -256,33 +295,8 @@ export const pageContinuity: Rule = {
   },
 };
 
-export const currency: Rule = {
-  id: "currency",
-  version: "1",
-  description: "Invoice currency is present and a supported ISO 4217 code.",
-  run(doc) {
-    const r = maker(this, "blocking");
-    const c = doc.header.currency;
-    const ok = c !== null && SUPPORTED_CURRENCIES.has(c);
-    return [
-      r({
-        outcome: ok ? "pass" : "fail",
-        row: null,
-        page: null,
-        field: "currency",
-        expected: "supported ISO 4217 code",
-        actual: c,
-        message: ok
-          ? `Currency ${c}.`
-          : c === null
-            ? "No invoice currency found. Symbols like $ are ambiguous; confirm the currency from the source."
-            : `Currency "${c}" is not a supported ISO 4217 code. Confirm the currency from the source.`,
-      }),
-    ];
-  },
-};
-
-export const V0_RULES: readonly Rule[] = [requiredFields, lineMath, invoiceTotal, duplicateLines, pageContinuity, currency];
+/** Document rules in R-number order; R4 runs later, against the SKU sheet. */
+export const V0_RULES: readonly Rule[] = [lineMath, footerTotal, weights, requiredFields, duplicateLines, pageContinuity];
 
 export function runRules(doc: NormalizedDocument, rules: readonly Rule[] = V0_RULES): CheckResult[] {
   return rules.flatMap((rule) => rule.run(doc));
