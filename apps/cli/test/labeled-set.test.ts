@@ -109,19 +109,20 @@ describe("M1 exit criterion on the synthetic labeled set", () => {
     expect(existsSync(join(work, "out", "lines.review.csv"))).toBe(true);
   });
 
-  it("an unmatched SKU alone is a warning: lines.csv is written with no HTS on that row", async () => {
+  it("an unmatched SKU alone blocks: no lines.csv, the row is needs_review, exit 1", async () => {
     quiet();
     const work = await mkdtemp(join(tmpdir(), "cea-r4-"));
     await cp(fixtureDir("clean-us-single-page"), join(work, "inv"), { recursive: true });
     const sheet = (await readFile(join(work, "inv", "sku-sheet.csv"), "utf8")).split("\n");
     await writeFile(join(work, "inv", "sku-sheet.csv"), sheet.filter((_, i) => i !== 1).join("\n"));
     const code = await run(["run", join(work, "inv", "invoice.pdf"), "--skus", join(work, "inv", "sku-sheet.csv"), "--out", join(work, "out")]);
-    expect(code).toBe(0);
+    expect(code).toBe(1);
     const report = JSON.parse(await readFile(join(work, "out", "report.json"), "utf8")) as Report;
-    expect(report.status).toBe("ready_for_approval");
-    const csv = (await readFile(join(work, "out", "lines.csv"), "utf8")).split("\r\n");
-    expect(csv[1]).toMatch(/,,,ok,R4-sku-match\(warning\)$/);
-    expect(existsSync(join(work, "out", "lines.review.csv"))).toBe(false);
+    expect(report.status).toBe("needs_review");
+    expect(existsSync(join(work, "out", "lines.csv"))).toBe(false);
+    const csv = (await readFile(join(work, "out", "lines.review.csv"), "utf8")).split("\r\n");
+    expect(csv[1]).toMatch(/,,,needs_review,R4-sku-match$/);
+    expect(csv.slice(2).filter(Boolean).every((r) => r.includes(",ok,"))).toBe(true);
   });
 
   it("a page that fails extraction shows up in the report and blocks", async () => {

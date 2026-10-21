@@ -42,12 +42,12 @@ Each stage writes to the output folder (default `.cea-out/<name>/`):
 `report.json` + `lines.csv`. If any blocking finding exists, `lines.csv` is
 not written (a stale one is removed); `lines.review.csv` is written instead,
 with affected rows marked `needs_review`, and the CLI exits 1. Warnings
-(R4 unmatched SKU, R6 repeated row across a page break, R3 weights not
-printed) do not block: the row stays in `lines.csv` with the rule in its
-`issues` column, and an unmatched row has an empty `hts10`.
+(R6 repeated row across a page break, R3 weights not printed) do not block:
+the row stays in `lines.csv` with the rule in its `issues` column. An
+unmatched SKU (R4) blocks, so a row with no HTS never reaches `lines.csv`.
 
 Checks follow the v0 design's rules: R1 line math (0.01), R2 footer total
-(0.01 × line count), R3 net ≤ gross weight, R4 SKU match (warning), R5 SKU,
+(0.01 × line count), R3 net ≤ gross weight, R4 SKU found in the SKU sheet, R5 SKU,
 quantity, unit price and origin on every line, R6 same SKU and price across a
 page break (warning), R7 page continuity. Saved raw extractions are reused by cache key,
 so re-runs never call the model; `--from <stage>` re-runs from any stage

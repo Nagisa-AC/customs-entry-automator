@@ -146,12 +146,12 @@ export interface MatchResult {
 }
 
 /**
- * R4: exact match on normalized SKU. Unmatched and ambiguous lines are a
- * warning: the row is exported with no HTS rather than blocking the invoice.
+ * R4: exact match on normalized SKU. Unmatched and ambiguous lines block:
+ * a row with no HTS keeps the invoice in review.
  */
 export function matchCatalog(doc: NormalizedDocument, catalog: Catalog): MatchResult {
   const checks: CheckResult[] = [];
-  const base = { ruleId: RULE_IDS.skuMatch, ruleVersion: "2", severity: "warning", field: "sku" } as const;
+  const base = { ruleId: RULE_IDS.skuMatch, ruleVersion: "3", severity: "blocking", field: "sku" } as const;
   const lines = doc.lines.map((line): MatchedLine => {
     const where = { row: line.row, page: line.page };
     if (!line.sku) {

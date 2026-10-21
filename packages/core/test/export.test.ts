@@ -38,8 +38,8 @@ describe("toLinesCsv", () => {
   });
 
   it("marks rows with blocking failures as needs_review and lists issues", () => {
-    const csv = toLinesCsv(matched(), "USD", [fail(1), { ...fail(1, "warning"), ruleId: "R4-sku-match" }]);
-    expect(csv.split("\r\n")[1]).toMatch(/,needs_review,R1-line-math;R4-sku-match\(warning\)$/);
+    const csv = toLinesCsv(matched(), "USD", [fail(1), { ...fail(1, "warning"), ruleId: "R6-duplicate-lines" }]);
+    expect(csv.split("\r\n")[1]).toMatch(/,needs_review,R1-line-math;R6-duplicate-lines\(warning\)$/);
     const warnOnly = toLinesCsv(matched(), "USD", [fail(1, "warning")]);
     expect(warnOnly.split("\r\n")[1]).toMatch(/,ok,R1-line-math\(warning\)$/);
   });
