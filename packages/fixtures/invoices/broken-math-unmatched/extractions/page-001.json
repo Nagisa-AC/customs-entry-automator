@@ -7,7 +7,10 @@
     "currency": "USD",
     "sellerName": "Brightline Fasteners Ltd. (synthetic)",
     "buyerName": "Example Importer LLC (synthetic)",
-    "invoiceTotal": "13,518.75"
+    "incoterms": "FOB Xiamen",
+    "invoiceTotal": null,
+    "totalGrossWeight": null,
+    "totalNetWeight": null
   },
   "lines": [
     {
@@ -24,33 +27,14 @@
       "continuesOnNextPage": false,
       "region": [
         0.049,
-        0.1831,
+        0.1957,
         0.9641,
-        0.202
+        0.2146
       ]
     },
     {
       "page": 1,
       "rowOnPage": 2,
-      "sku": "BK-1007",
-      "description": "Stainless flat washer M8",
-      "quantity": "350",
-      "unitOfMeasure": "PCS",
-      "unitPrice": "8.79",
-      "extendedPrice": "3,076.50",
-      "countryOfOrigin": "MX",
-      "continuedFromPreviousPage": false,
-      "continuesOnNextPage": false,
-      "region": [
-        0.049,
-        0.2033,
-        0.9641,
-        0.2222
-      ]
-    },
-    {
-      "page": 1,
-      "rowOnPage": 3,
       "sku": "BK-1014",
       "description": "Nylon insert lock nut M8",
       "quantity": "25",
@@ -62,14 +46,14 @@
       "continuesOnNextPage": false,
       "region": [
         0.049,
-        0.2235,
+        0.2159,
         0.9641,
-        0.2424
+        0.2348
       ]
     },
     {
       "page": 1,
-      "rowOnPage": 4,
+      "rowOnPage": 3,
       "sku": "BK-1021",
       "description": "Steel L-bracket 75mm with countersunk mounting holes",
       "quantity": "275",
@@ -81,14 +65,14 @@
       "continuesOnNextPage": false,
       "region": [
         0.049,
-        0.2437,
+        0.2361,
         0.9641,
-        0.2626
+        0.2551
       ]
     },
     {
       "page": 1,
-      "rowOnPage": 5,
+      "rowOnPage": 4,
       "sku": "BK-1028",
       "description": "Brass cabinet hinge 50mm",
       "quantity": "325",
@@ -100,14 +84,14 @@
       "continuesOnNextPage": false,
       "region": [
         0.049,
-        0.2639,
+        0.2563,
         0.9641,
-        0.2828
+        0.2753
       ]
     },
     {
       "page": 1,
-      "rowOnPage": 6,
+      "rowOnPage": 5,
       "sku": "BK-1007",
       "description": "Stainless flat washer M8",
       "quantity": "350",
@@ -119,9 +103,9 @@
       "continuesOnNextPage": false,
       "region": [
         0.049,
-        0.2841,
+        0.2765,
         0.9641,
-        0.303
+        0.2955
       ]
     }
   ]

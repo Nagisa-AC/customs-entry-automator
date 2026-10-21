@@ -10,7 +10,10 @@
     "currency": "USD",
     "sellerName": "Harbor Lane Hardware Mfg. Co., Ltd. (synthetic)",
     "buyerName": "Example Importer LLC (synthetic)",
-    "invoiceTotal": "25646.75"
+    "incoterms": "FOB Ningbo",
+    "invoiceTotal": "25646.75",
+    "totalGrossWeight": "2760 LBS",
+    "totalNetWeight": "2512.5 LBS"
   },
   "lines": [
     {

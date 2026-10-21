@@ -65,4 +65,15 @@ describe("synthetic fixtures", () => {
     expect(p2.lines[0]).toMatchObject({ continuedFromPreviousPage: true, sku: null });
     expect(p2.lines.at(-1)).toMatchObject({ continuesOnNextPage: true });
   });
+
+  it("prints weights and incoterms, and plants the R3 and R6 cases in the broken invoice", async () => {
+    const dir = join(fixtureDir("broken-math-unmatched"), "extractions");
+    const p1 = JSON.parse(await readFile(join(dir, "page-001.json"), "utf8"));
+    const p2 = JSON.parse(await readFile(join(dir, "page-002.json"), "utf8"));
+    expect(p1.header).toMatchObject({ incoterms: "FOB Xiamen", totalGrossWeight: null });
+    expect(p2.header).toMatchObject({ totalGrossWeight: "310 KG", totalNetWeight: "325.4 KG" });
+    expect(p2.lines[0]).toMatchObject({ sku: p1.lines.at(-1).sku, unitPrice: p1.lines.at(-1).unitPrice });
+    const eu = JSON.parse(await readFile(join(fixtureDir("european-format"), "extractions", "page-002.json"), "utf8"));
+    expect(eu.header).toMatchObject({ totalGrossWeight: "1.234,5 kg", totalNetWeight: "1.180 kg" });
+  });
 });

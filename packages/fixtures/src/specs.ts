@@ -24,11 +24,22 @@ export interface ExpectedFailure {
   row: number | null;
 }
 
+export interface WeightSpec {
+  /** Canonical decimals, printed per the invoice's format. */
+  gross: string;
+  net: string;
+  /** Printed after the number, e.g. "KG", "kg", "LBS". */
+  unit: string;
+}
+
 export interface InvoiceSpec {
   name: string;
   purpose: string;
   format: NumberFormat;
   currency: string;
+  incoterms: string;
+  /** Printed in the footer of the last page. */
+  weights: WeightSpec;
   invoiceNumber: string;
   invoiceDate: string;
   seller: string;
@@ -90,6 +101,8 @@ const cleanUs: InvoiceSpec = {
   purpose: "Clean one-page US-format invoice; every check passes.",
   format: "dot",
   currency: "USD",
+  incoterms: "FOB Ningbo",
+  weights: { gross: "2760", net: "2512.5", unit: "LBS" },
   invoiceNumber: "HL-2026-0412",
   invoiceDate: "2026-09-14",
   seller: "Harbor Lane Hardware Mfg. Co., Ltd. (synthetic)",
@@ -107,6 +120,8 @@ const multiPage: InvoiceSpec = {
   purpose: "Three-page US-format invoice with rows split across both page breaks.",
   format: "dot",
   currency: "USD",
+  incoterms: "CIF Long Beach",
+  weights: { gross: "4185.6", net: "3902.25", unit: "KG" },
   invoiceNumber: "PX-77310",
   invoiceDate: "2026-09-30",
   seller: "Pacific Crossing Industrial Supply (synthetic)",
@@ -122,6 +137,8 @@ const european: InvoiceSpec = {
   purpose: "Two-page EUR invoice printed with comma decimals and dot grouping.",
   format: "comma",
   currency: "EUR",
+  incoterms: "EXW Solingen",
+  weights: { gross: "1234.5", net: "1180", unit: "kg" },
   invoiceNumber: "RE-2026/0098",
   invoiceDate: "28.09.2026",
   seller: "Rheinwerk Beschlaege GmbH (synthetic)",
@@ -133,24 +150,27 @@ const european: InvoiceSpec = {
 
 const broken: InvoiceSpec = {
   name: "broken-math-unmatched",
-  purpose: "One-page invoice with a line-math error, an exact duplicate row, an uncatalogued SKU and a missing origin.",
+  purpose:
+    "Two-page invoice with a line-math error, net weight above gross, an uncatalogued SKU with no origin, and the last row of page 1 repeated at the top of page 2.",
   format: "dot",
   currency: "USD",
+  incoterms: "FOB Xiamen",
+  weights: { gross: "310", net: "325.4", unit: "KG" },
   invoiceNumber: "BK-1003",
   invoiceDate: "2026-10-02",
   seller: "Brightline Fasteners Ltd. (synthetic)",
   buyer: "Example Importer LLC (synthetic)",
-  rowsPerPage: [6],
+  rowsPerPage: [5, 2],
   lines: (() => {
-    const base = hardwareLines(5, 99, "BK");
-    base[2] = { ...base[2]!, amountOverride: "1.00" };
-    base[3] = { ...base[3]!, inCatalog: false, origin: null };
-    return [...base, { ...base[1]! }];
+    const [b0, b1, b2, b3, b4, b5] = hardwareLines(6, 99, "BK") as [LineSpec, LineSpec, LineSpec, LineSpec, LineSpec, LineSpec];
+    return [b0, { ...b2, amountOverride: "1.00" }, { ...b3, inCatalog: false, origin: null }, b4, b1, { ...b1 }, b5];
   })(),
+  /** In report order: rules run in V0_RULES order (R1, R2, R3, R5, R6, R7). */
   expectedFailures: [
-    { ruleId: "line-math", row: 3 },
-    { ruleId: "required-fields", row: 4 },
-    { ruleId: "duplicate-lines", row: 6 },
+    { ruleId: "R1-line-math", row: 2 },
+    { ruleId: "R3-weights", row: null },
+    { ruleId: "R5-required-fields", row: 3 },
+    { ruleId: "R6-duplicate-lines", row: 6 },
   ],
 };
 

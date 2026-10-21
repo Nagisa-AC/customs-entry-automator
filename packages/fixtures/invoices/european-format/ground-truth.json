@@ -10,7 +10,10 @@
     "currency": "EUR",
     "sellerName": "Rheinwerk Beschlaege GmbH (synthetic)",
     "buyerName": "Example Importer LLC (synthetic)",
-    "invoiceTotal": "597099.5"
+    "incoterms": "EXW Solingen",
+    "invoiceTotal": "597099.5",
+    "totalGrossWeight": "1234.5 kg",
+    "totalNetWeight": "1180 kg"
   },
   "lines": [
     {

@@ -1,16 +1,19 @@
 {
   "invoice": "broken-math-unmatched",
-  "purpose": "One-page invoice with a line-math error, an exact duplicate row, an uncatalogued SKU and a missing origin.",
+  "purpose": "Two-page invoice with a line-math error, net weight above gross, an uncatalogued SKU with no origin, and the last row of page 1 repeated at the top of page 2.",
   "synthetic": true,
   "decimalFormat": "dot",
-  "pageCount": 1,
+  "pageCount": 2,
   "header": {
     "invoiceNumber": "BK-1003",
     "invoiceDate": "2026-10-02",
     "currency": "USD",
     "sellerName": "Brightline Fasteners Ltd. (synthetic)",
     "buyerName": "Example Importer LLC (synthetic)",
-    "invoiceTotal": "13518.75"
+    "incoterms": "FOB Xiamen",
+    "invoiceTotal": "27639.75",
+    "totalGrossWeight": "310 KG",
+    "totalNetWeight": "325.4 KG"
   },
   "lines": [
     {
@@ -28,18 +31,6 @@
     {
       "row": 2,
       "page": 1,
-      "sku": "BK-1007",
-      "description": "Stainless flat washer M8",
-      "quantity": "350",
-      "unitOfMeasure": "PCS",
-      "unitPrice": "8.79",
-      "extendedPrice": "3076.5",
-      "countryOfOrigin": "MX",
-      "hts10": "7318220000"
-    },
-    {
-      "row": 3,
-      "page": 1,
       "sku": "BK-1014",
       "description": "Nylon insert lock nut M8",
       "quantity": "25",
@@ -50,7 +41,7 @@
       "hts10": "7318160085"
     },
     {
-      "row": 4,
+      "row": 3,
       "page": 1,
       "sku": "BK-1021",
       "description": "Steel L-bracket 75mm with countersunk mounting holes",
@@ -62,7 +53,7 @@
       "hts10": null
     },
     {
-      "row": 5,
+      "row": 4,
       "page": 1,
       "sku": "BK-1028",
       "description": "Brass cabinet hinge 50mm",
@@ -74,7 +65,7 @@
       "hts10": "8302104000"
     },
     {
-      "row": 6,
+      "row": 5,
       "page": 1,
       "sku": "BK-1007",
       "description": "Stainless flat washer M8",
@@ -84,19 +75,47 @@
       "extendedPrice": "3076.5",
       "countryOfOrigin": "MX",
       "hts10": "7318220000"
+    },
+    {
+      "row": 6,
+      "page": 2,
+      "sku": "BK-1007",
+      "description": "Stainless flat washer M8",
+      "quantity": "350",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "8.79",
+      "extendedPrice": "3076.5",
+      "countryOfOrigin": "MX",
+      "hts10": "7318220000"
+    },
+    {
+      "row": 7,
+      "page": 2,
+      "sku": "BK-1035",
+      "description": "Drawer slide full extension 450mm",
+      "quantity": "675",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "20.92",
+      "extendedPrice": "14121",
+      "countryOfOrigin": "IN",
+      "hts10": "8302420000"
     }
   ],
   "expectedFailures": [
     {
-      "ruleId": "line-math",
+      "ruleId": "R1-line-math",
+      "row": 2
+    },
+    {
+      "ruleId": "R3-weights",
+      "row": null
+    },
+    {
+      "ruleId": "R5-required-fields",
       "row": 3
     },
     {
-      "ruleId": "required-fields",
-      "row": 4
-    },
-    {
-      "ruleId": "duplicate-lines",
+      "ruleId": "R6-duplicate-lines",
       "row": 6
     }
   ]

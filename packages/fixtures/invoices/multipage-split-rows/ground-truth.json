@@ -10,7 +10,10 @@
     "currency": "USD",
     "sellerName": "Pacific Crossing Industrial Supply (synthetic)",
     "buyerName": "Example Importer LLC (synthetic)",
-    "invoiceTotal": "276365.5"
+    "incoterms": "CIF Long Beach",
+    "invoiceTotal": "276365.5",
+    "totalGrossWeight": "4185.6 KG",
+    "totalNetWeight": "3902.25 KG"
   },
   "lines": [
     {

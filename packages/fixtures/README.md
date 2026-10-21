@@ -17,7 +17,7 @@ Each folder under `invoices/` holds:
 | `clean-us-single-page` | One page, US number format, everything passes |
 | `multipage-split-rows` | Three pages, rows split across both page breaks |
 | `european-format` | EUR, comma decimals and dot grouping |
-| `broken-math-unmatched` | Line-math error, duplicate row, uncatalogued SKU, missing origin |
+| `broken-math-unmatched` | Two pages: line-math error, net weight above gross, uncatalogued SKU with no origin, row repeated across the page break |
 
 Definitions live in `src/specs.ts`. After changing them, regenerate with
 `pnpm --filter @cea/fixtures generate`; a test fails if committed files drift

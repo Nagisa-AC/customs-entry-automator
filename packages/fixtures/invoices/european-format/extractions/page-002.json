@@ -7,7 +7,10 @@
     "currency": null,
     "sellerName": null,
     "buyerName": null,
-    "invoiceTotal": "597.099,50"
+    "incoterms": null,
+    "invoiceTotal": "597.099,50",
+    "totalGrossWeight": "1.234,5 kg",
+    "totalNetWeight": "1.180 kg"
   },
   "lines": [
     {

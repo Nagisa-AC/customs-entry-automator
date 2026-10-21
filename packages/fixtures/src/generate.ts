@@ -98,6 +98,9 @@ export async function generateInvoice(spec: InvoiceSpec): Promise<GeneratedInvoi
   const printed = spec.lines.map((l) => printLine(l, spec.format));
   const total = printed.reduce((a, p) => a.plus(p.amountValue), new Decimal(0));
   const totalPrinted = formatNumber(total, 2, spec.format);
+  const weight = (canonical: string) => `${formatNumber(new Decimal(canonical), scaleOf(canonical), spec.format)} ${spec.weights.unit}`;
+  const grossPrinted = weight(spec.weights.gross);
+  const netPrinted = weight(spec.weights.net);
   const layout = layoutRows(spec);
   const pageCount = layout.length;
 
@@ -116,7 +119,10 @@ export async function generateInvoice(spec: InvoiceSpec): Promise<GeneratedInvoi
     const pageNo = p + 1;
     const page = doc.addPage([PAGE_W, PAGE_H]);
     let y = PAGE_H - 50;
-    const header = { invoiceNumber: null as string | null, invoiceDate: null as string | null, currency: null as string | null, sellerName: null as string | null, buyerName: null as string | null, invoiceTotal: null as string | null };
+    const header: Record<string, string | null> = {
+      invoiceNumber: null, invoiceDate: null, currency: null, sellerName: null, buyerName: null,
+      incoterms: null, invoiceTotal: null, totalGrossWeight: null, totalNetWeight: null,
+    };
 
     if (pageNo === 1) {
       text(page, bold, "COMMERCIAL INVOICE", 36, y, 16);
@@ -133,13 +139,17 @@ export async function generateInvoice(spec: InvoiceSpec): Promise<GeneratedInvoi
       text(page, font, spec.invoiceDate, 292, y, 9);
       text(page, bold, "Currency:", 420, y, 9);
       text(page, font, spec.currency, 474, y, 9);
-      y -= 30;
+      y -= 14;
+      text(page, bold, "Incoterms:", 36, y, 9);
+      text(page, font, spec.incoterms, 100, y, 9);
+      y -= 26;
       Object.assign(header, {
         invoiceNumber: spec.invoiceNumber,
         invoiceDate: spec.invoiceDate,
         currency: spec.currency,
         sellerName: spec.seller,
         buyerName: spec.buyer,
+        incoterms: spec.incoterms,
       });
     } else {
       text(page, font, `Invoice ${spec.invoiceNumber} (continued)`, 36, y, 9);
@@ -193,6 +203,12 @@ export async function generateInvoice(spec: InvoiceSpec): Promise<GeneratedInvoi
       text(page, bold, `TOTAL ${spec.currency}`, COLS.unitPrice - 20, y - 4, 9);
       text(page, bold, totalPrinted, COLS.amount, y - 4, 9);
       header.invoiceTotal = totalPrinted;
+      text(page, bold, "Total gross weight:", 36, y - 24, 9);
+      text(page, font, grossPrinted, 140, y - 24, 9);
+      text(page, bold, "Total net weight:", 36, y - 38, 9);
+      text(page, font, netPrinted, 140, y - 38, 9);
+      header.totalGrossWeight = grossPrinted;
+      header.totalNetWeight = netPrinted;
     }
     text(page, font, `Page ${pageNo} of ${pageCount}`, 270, 30);
     text(page, font, "SYNTHETIC TEST DOCUMENT - NOT A REAL INVOICE", 200, 18, 7);
@@ -217,7 +233,10 @@ export async function generateInvoice(spec: InvoiceSpec): Promise<GeneratedInvoi
       currency: spec.currency,
       sellerName: spec.seller,
       buyerName: spec.buyer,
+      incoterms: spec.incoterms,
       invoiceTotal: total.toFixed(),
+      totalGrossWeight: `${spec.weights.gross} ${spec.weights.unit}`,
+      totalNetWeight: `${spec.weights.net} ${spec.weights.unit}`,
     },
     lines: printed.map((pl, i) => ({
       row: i + 1,
