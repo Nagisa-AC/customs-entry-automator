@@ -1,0 +1,207 @@
+{
+  "schemaVersion": "extraction-v1",
+  "page": 1,
+  "header": {
+    "invoiceNumber": "RE-2026/0098",
+    "invoiceDate": "28.09.2026",
+    "currency": "EUR",
+    "sellerName": "Rheinwerk Beschlaege GmbH (synthetic)",
+    "buyerName": "Example Importer LLC (synthetic)",
+    "incoterms": "EXW Solingen",
+    "invoiceTotal": null,
+    "totalGrossWeight": null,
+    "totalNetWeight": null
+  },
+  "lines": [
+    {
+      "page": 1,
+      "rowOnPage": 1,
+      "sku": "RW-1000",
+      "description": "Zinc-plated hex bolt M8x40",
+      "quantity": "3.000",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "21,97",
+      "extendedPrice": "65.910,00",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1957,
+        0.9641,
+        0.2146
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 2,
+      "sku": "RW-1007",
+      "description": "Stainless flat washer M8",
+      "quantity": "950",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "1,23",
+      "extendedPrice": "1.168,50",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2159,
+        0.9641,
+        0.2348
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 3,
+      "sku": "RW-1014",
+      "description": "Nylon insert lock nut M8",
+      "quantity": "375",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "1,32",
+      "extendedPrice": "495,00",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2361,
+        0.9641,
+        0.2551
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 4,
+      "sku": "RW-1021",
+      "description": "Steel L-bracket 75mm with countersunk mounting holes",
+      "quantity": "1.000",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "23,39",
+      "extendedPrice": "23.390,00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2563,
+        0.9641,
+        0.2753
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 5,
+      "sku": "RW-1028",
+      "description": "Brass cabinet hinge 50mm",
+      "quantity": "5.700",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "13,19",
+      "extendedPrice": "75.183,00",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2765,
+        0.9641,
+        0.2955
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 6,
+      "sku": "RW-1035",
+      "description": "Drawer slide full extension 450mm",
+      "quantity": "800",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "18,76",
+      "extendedPrice": "15.008,00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2967,
+        0.9641,
+        0.3157
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 7,
+      "sku": "RW-1042",
+      "description": "Cordless drill battery pack 18V 2.0Ah lithium-ion",
+      "quantity": "475",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "20,50",
+      "extendedPrice": "9.737,50",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3169,
+        0.9641,
+        0.3359
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 8,
+      "sku": "RW-1049",
+      "description": "Rubber grommet assortment kit",
+      "quantity": "500",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "2,25",
+      "extendedPrice": "1.125,00",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3371,
+        0.9641,
+        0.3561
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 9,
+      "sku": "RW-1056",
+      "description": "Aluminium T-slot extrusion 1m",
+      "quantity": "10.200",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "8,64",
+      "extendedPrice": "88.128,00",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3573,
+        0.9641,
+        0.3763
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 10,
+      "sku": "RW-1063",
+      "description": "PVC conduit elbow 20mm",
+      "quantity": "1.000",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "2,97",
+      "extendedPrice": "2.970,00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3775,
+        0.9641,
+        0.3965
+      ]
+    }
+  ]
+}
