@@ -12,7 +12,8 @@ import { runPipeline } from "./pipeline.ts";
 /** Ground truth written alongside each labeled invoice (see packages/fixtures). */
 export interface GroundTruth {
   invoice: string;
-  header: { invoiceNumber: string; currency: string; invoiceTotal: string };
+  /** Weights are canonical decimal plus unit as printed, e.g. "2512.5 LBS". */
+  header: { invoiceNumber: string; currency: string; invoiceTotal: string; totalGrossWeight: string; totalNetWeight: string };
   lines: {
     row: number;
     sku: string;
@@ -29,7 +30,7 @@ export const SCORED_FIELDS = ["sku", "description", "quantity", "unitPrice", "ex
 export type ScoredField = (typeof SCORED_FIELDS)[number];
 /** Fields whose silent corruption would change an entry. */
 const CRITICAL: readonly ScoredField[] = ["quantity", "unitPrice", "extendedPrice", "countryOfOrigin", "hts10"];
-const HEADER_FIELDS = ["invoiceNumber", "currency", "invoiceTotal"] as const;
+const HEADER_FIELDS = ["invoiceNumber", "currency", "invoiceTotal", "totalGrossWeight", "totalNetWeight"] as const;
 type HeaderField = (typeof HEADER_FIELDS)[number];
 
 export interface InvoiceScore {
@@ -66,7 +67,17 @@ function fieldCorrect(line: MatchedLine, gt: GroundTruth["lines"][number], field
 }
 
 function headerCorrect(header: NormalizedHeader, gt: GroundTruth["header"], field: HeaderField): boolean {
-  return field === "invoiceTotal" ? sameNumber(header.invoiceTotal?.value, gt.invoiceTotal) : norm(header[field]) === norm(gt[field]);
+  switch (field) {
+    case "invoiceTotal":
+      return sameNumber(header.invoiceTotal?.value, gt.invoiceTotal);
+    case "totalGrossWeight":
+    case "totalNetWeight": {
+      const [value, unit = ""] = gt[field].split(" ");
+      return sameNumber(header[field]?.value, value) && (header[field]?.unit ?? "") === norm(unit).replace(/S$/, "");
+    }
+    default:
+      return norm(header[field]) === norm(gt[field]);
+  }
 }
 
 /**
@@ -95,7 +106,7 @@ export function scoreInvoice(gt: GroundTruth, report: Report, header: Normalized
   }
   const headerScore = Object.fromEntries(HEADER_FIELDS.map((f) => [f, headerCorrect(header, gt.header, f)])) as Record<HeaderField, boolean>;
   const docBlocked = blocking.length > 0;
-  for (const f of ["currency", "invoiceTotal"] as const) {
+  for (const f of ["currency", "invoiceTotal", "totalGrossWeight", "totalNetWeight"] as const) {
     if (!headerScore[f] && !docBlocked) silentErrors.push({ row: null, field: f });
   }
   const pages = report.extraction.pages;

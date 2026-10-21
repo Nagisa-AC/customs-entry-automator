@@ -54,7 +54,7 @@ describe("runComparison on the synthetic labeled set", () => {
 describe("scoreInvoice", () => {
   const gt: GroundTruth = {
     invoice: "t",
-    header: { invoiceNumber: "INV-1001", currency: "USD", invoiceTotal: "1525" },
+    header: { invoiceNumber: "INV-1001", currency: "USD", invoiceTotal: "1525", totalGrossWeight: "412.5 KG", totalNetWeight: "380 KGS" },
     lines: [
       { row: 1, sku: "AB-100", description: "Steel bracket", quantity: "10", unitPrice: "2.5", extendedPrice: "25", countryOfOrigin: "CN", hts10: "1111111111" },
       { row: 2, sku: "AB-200", description: "Hinge", quantity: "1000", unitPrice: "1.25", extendedPrice: "1250", countryOfOrigin: "CN", hts10: "2222222222" },
@@ -70,13 +70,13 @@ describe("scoreInvoice", () => {
     ({
       status: blockingRow === null ? "ready_for_approval" : "needs_review",
       extraction: { provider: "p", model: "m", pages: [{ page: 1, status: "extracted", error: null, latencyMs: 100, inputTokens: 10, outputTokens: 5 }] },
-      checks: blockingRow === null ? [] : [{ ruleId: "line-math", ruleVersion: "1", severity: "blocking", outcome: "fail", row: blockingRow, page: 1, field: null, expected: null, actual: null, message: "" }],
+      checks: blockingRow === null ? [] : [{ ruleId: "R1-line-math", ruleVersion: "2", severity: "blocking", outcome: "fail", row: blockingRow, page: 1, field: null, expected: null, actual: null, message: "" }],
     }) as unknown as Report;
 
   it("aligns by SKU and computes recall/precision inputs", () => {
     const s = scoreInvoice(gt, report(null), doc.header, lines);
     expect(s).toMatchObject({ expectedLines: 3, extractedLines: 3, alignedLines: 2, latencyMs: 100, inputTokens: 10 });
-    expect(s.headerCorrect).toEqual({ invoiceNumber: true, currency: true, invoiceTotal: true });
+    expect(s.headerCorrect).toEqual({ invoiceNumber: true, currency: true, invoiceTotal: true, totalGrossWeight: true, totalNetWeight: true });
     expect(s.fieldCorrect.quantity).toBe(2);
   });
 
@@ -89,6 +89,12 @@ describe("scoreInvoice", () => {
   it("counts a wrong currency or total on an unblocked document as silent", () => {
     const s = scoreInvoice({ ...gt, header: { ...gt.header, currency: "EUR" } }, report(null), doc.header, lines);
     expect(s.silentErrors).toContainEqual({ row: null, field: "currency" });
+  });
+
+  it("scores weights by value and unit", () => {
+    const wrongUnit = scoreInvoice({ ...gt, header: { ...gt.header, totalNetWeight: "380 LBS" } }, report(null), doc.header, lines);
+    expect(wrongUnit.headerCorrect.totalNetWeight).toBe(false);
+    expect(wrongUnit.silentErrors).toContainEqual({ row: null, field: "totalNetWeight" });
   });
 });
 
