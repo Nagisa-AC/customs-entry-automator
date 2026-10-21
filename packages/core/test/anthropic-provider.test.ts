@@ -2,7 +2,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { AnthropicProvider, anthropicConfigFromEnv, PAGE_PROMPT, ProviderError, type PageInput } from "../src/index.ts";
+import { AnthropicProvider, anthropicConfigFromEnv, PAGE_EXTRACTION_JSON_SCHEMA, PAGE_PROMPT, ProviderError, type PageInput } from "../src/index.ts";
 
 async function pageInput(): Promise<PageInput> {
   const dir = await mkdtemp(join(tmpdir(), "cea-anthropic-"));
@@ -29,18 +29,19 @@ describe("AnthropicProvider", () => {
       stop_reason: "end_turn",
       usage: { input_tokens: 1800, output_tokens: 420 },
     });
-    const p = new AnthropicProvider({ apiKey: "sk-ant", model: "vision-model", beta: "structured-outputs", fetch: fn });
+    const p = new AnthropicProvider({ apiKey: "sk-ant", model: "vision-model", fetch: fn });
     const res = await p.extractPage(await pageInput(), PAGE_PROMPT, signal());
     expect(res).toEqual({ rawText: '{"ok":true}', usage: { inputTokens: 1800, outputTokens: 420 } });
     expect(calls[0]!.url).toBe("https://api.anthropic.com/v1/messages");
     const headers = calls[0]!.init.headers as Record<string, string>;
     expect(headers["x-api-key"]).toBe("sk-ant");
     expect(headers["anthropic-version"]).toBe("2023-06-01");
-    expect(headers["anthropic-beta"]).toBe("structured-outputs");
+    expect(headers["anthropic-beta"]).toBeUndefined();
     const body = JSON.parse(calls[0]!.init.body as string);
     expect(body).toMatchObject({ model: "vision-model", temperature: 0, system: PAGE_PROMPT });
     expect(body.tools).toBeUndefined();
-    expect(body.output_format.type).toBe("json_schema");
+    expect(body.output_format).toBeUndefined();
+    expect(body.output_config).toEqual({ format: { type: "json_schema", schema: PAGE_EXTRACTION_JSON_SCHEMA } });
     expect(body.messages[0].content[0]).toEqual({ type: "image", source: { type: "base64", media_type: "image/png", data: Buffer.from("fake-png").toString("base64") } });
     expect(body.messages[0].content[1].text).toContain("Page 2 of 3");
   });
@@ -65,17 +66,18 @@ describe("AnthropicProvider", () => {
     expect((err as ProviderError).transient).toBe(false);
   });
 
-  it("omits the beta header unless configured", async () => {
-    const { fn, calls } = mockFetch(200, { content: [{ type: "text", text: "{}" }], stop_reason: "end_turn" });
-    await new AnthropicProvider({ apiKey: "k", model: "m", fetch: fn }).extractPage(await pageInput(), PAGE_PROMPT, signal());
-    expect((calls[0]!.init.headers as Record<string, string>)["anthropic-beta"]).toBeUndefined();
-  });
 });
 
 describe("anthropicConfigFromEnv", () => {
+  const terms = { CEA_PROVIDER_ZERO_RETENTION: "confirmed", CEA_PROVIDER_REGION: "us" };
+
+  it("refuses until zero-retention and US-region terms are attested", () => {
+    expect(() => anthropicConfigFromEnv({ ANTHROPIC_API_KEY: "k", CEA_ANTHROPIC_MODEL: "m" })).toThrow(/anthropic is disabled/);
+  });
+
   it("requires a key and an explicit model", () => {
-    expect(() => anthropicConfigFromEnv({})).toThrow(/ANTHROPIC_API_KEY/);
-    expect(() => anthropicConfigFromEnv({ ANTHROPIC_API_KEY: "k" })).toThrow(/CEA_ANTHROPIC_MODEL/);
-    expect(anthropicConfigFromEnv({ ANTHROPIC_API_KEY: "k", CEA_ANTHROPIC_MODEL: "m", CEA_ANTHROPIC_BETA: "b" })).toEqual({ apiKey: "k", model: "m", beta: "b" });
+    expect(() => anthropicConfigFromEnv(terms)).toThrow(/ANTHROPIC_API_KEY/);
+    expect(() => anthropicConfigFromEnv({ ...terms, ANTHROPIC_API_KEY: "k" })).toThrow(/CEA_ANTHROPIC_MODEL/);
+    expect(anthropicConfigFromEnv({ ...terms, ANTHROPIC_API_KEY: "k", CEA_ANTHROPIC_MODEL: "m", ANTHROPIC_BASE_URL: "https://x" })).toEqual({ apiKey: "k", model: "m", baseUrl: "https://x" });
   });
 });

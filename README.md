@@ -57,7 +57,7 @@ using the saved outputs of earlier ones.
 
 To use a real model: `--provider openai` (`OPENAI_API_KEY`, `CEA_OPENAI_MODEL`,
 optional `OPENAI_BASE_URL`) or `--provider anthropic` (`ANTHROPIC_API_KEY`,
-`CEA_ANTHROPIC_MODEL`, optional `ANTHROPIC_BASE_URL`, `CEA_ANTHROPIC_BETA`).
+`CEA_ANTHROPIC_MODEL`, optional `ANTHROPIC_BASE_URL`).
 See `.env.example`. Without keys, only invoices that have recorded extractions
 can run.
 

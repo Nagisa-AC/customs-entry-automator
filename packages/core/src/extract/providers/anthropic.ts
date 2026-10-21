@@ -1,30 +1,28 @@
 import { readFile } from "node:fs/promises";
 import { PAGE_EXTRACTION_JSON_SCHEMA } from "../json-schema.ts";
 import { pageUserMessage } from "../prompt.ts";
+import { assertProviderDataTerms } from "./data-terms.ts";
 import { ProviderError, type ExtractionProvider, type PageInput, type ProviderResponse } from "../types.ts";
 
 export interface AnthropicConfig {
   apiKey: string;
   model: string;
   baseUrl?: string;
-  /** Sent as `anthropic-beta` when set, for structured-output support. */
-  beta?: string;
   maxTokens?: number;
   fetch?: typeof fetch;
 }
 
-/** Reads ANTHROPIC_API_KEY, CEA_ANTHROPIC_MODEL, optional ANTHROPIC_BASE_URL and CEA_ANTHROPIC_BETA. */
+/**
+ * Reads ANTHROPIC_API_KEY, CEA_ANTHROPIC_MODEL and optional ANTHROPIC_BASE_URL.
+ * Refuses unless zero-retention and US-region terms are attested.
+ */
 export function anthropicConfigFromEnv(env: NodeJS.ProcessEnv = process.env): AnthropicConfig {
+  assertProviderDataTerms("anthropic", env);
   const apiKey = env.ANTHROPIC_API_KEY;
   const model = env.CEA_ANTHROPIC_MODEL;
   if (!apiKey) throw new ProviderError("ANTHROPIC_API_KEY is not set", false);
   if (!model) throw new ProviderError("CEA_ANTHROPIC_MODEL is not set (choose a vision model explicitly)", false);
-  return {
-    apiKey,
-    model,
-    ...(env.ANTHROPIC_BASE_URL ? { baseUrl: env.ANTHROPIC_BASE_URL } : {}),
-    ...(env.CEA_ANTHROPIC_BETA ? { beta: env.CEA_ANTHROPIC_BETA } : {}),
-  };
+  return { apiKey, model, ...(env.ANTHROPIC_BASE_URL ? { baseUrl: env.ANTHROPIC_BASE_URL } : {}) };
 }
 
 interface MessagesResponse {
@@ -60,14 +58,13 @@ export class AnthropicProvider implements ExtractionProvider {
           ],
         },
       ],
-      output_format: { type: "json_schema", schema: PAGE_EXTRACTION_JSON_SCHEMA },
+      output_config: { format: { type: "json_schema", schema: PAGE_EXTRACTION_JSON_SCHEMA } },
     };
     const headers: Record<string, string> = {
       "content-type": "application/json",
       "x-api-key": this.config.apiKey,
       "anthropic-version": "2023-06-01",
     };
-    if (this.config.beta) headers["anthropic-beta"] = this.config.beta;
     const doFetch = this.config.fetch ?? fetch;
     let res: Response;
     try {

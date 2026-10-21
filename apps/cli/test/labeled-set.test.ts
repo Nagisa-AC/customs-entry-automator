@@ -176,7 +176,9 @@ describe("cli compare", () => {
 
   it("builds the anthropic provider from env", () => {
     const pdf = join(fixtureDir("clean-us-single-page"), "invoice.pdf");
-    expect(() => selectProvider("anthropic", pdf, undefined, {})).toThrow(/ANTHROPIC_API_KEY/);
-    expect(selectProvider("anthropic", pdf, undefined, { ANTHROPIC_API_KEY: "k", CEA_ANTHROPIC_MODEL: "m" }).id).toBe("anthropic");
+    expect(() => selectProvider("anthropic", pdf, undefined, { ANTHROPIC_API_KEY: "k", CEA_ANTHROPIC_MODEL: "m" })).toThrow(/zero data retention/);
+    expect(
+      selectProvider("anthropic", pdf, undefined, { ANTHROPIC_API_KEY: "k", CEA_ANTHROPIC_MODEL: "m", CEA_PROVIDER_ZERO_RETENTION: "confirmed", CEA_PROVIDER_REGION: "us" }).id,
+    ).toBe("anthropic");
   });
 });
