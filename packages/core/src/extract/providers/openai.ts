@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { PAGE_EXTRACTION_JSON_SCHEMA } from "../json-schema.ts";
 import { pageUserMessage } from "../prompt.ts";
+import { assertProviderDataTerms } from "./data-terms.ts";
 import { ProviderError, type ExtractionProvider, type PageInput, type ProviderResponse } from "../types.ts";
 
 export interface OpenAIConfig {
@@ -11,8 +12,12 @@ export interface OpenAIConfig {
   fetch?: typeof fetch;
 }
 
-/** Reads OPENAI_API_KEY, CEA_OPENAI_MODEL and optional OPENAI_BASE_URL. */
+/**
+ * Reads OPENAI_API_KEY, CEA_OPENAI_MODEL and optional OPENAI_BASE_URL.
+ * Refuses unless zero-retention and US-region terms are attested.
+ */
 export function openAIConfigFromEnv(env: NodeJS.ProcessEnv = process.env): OpenAIConfig {
+  assertProviderDataTerms("openai", env);
   const apiKey = env.OPENAI_API_KEY;
   const model = env.CEA_OPENAI_MODEL;
   if (!apiKey) throw new ProviderError("OPENAI_API_KEY is not set", false);

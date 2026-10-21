@@ -173,9 +173,46 @@ describe("extract()", () => {
   });
 });
 
-describe("provider JSON schema", () => {
+type Node = Record<string, unknown>;
+
+function walk(node: unknown, visit: (n: Node, path: string) => void, path = "$"): void {
+  if (Array.isArray(node)) node.forEach((n, i) => walk(n, visit, `${path}[${i}]`));
+  else if (typeof node === "object" && node !== null) {
+    visit(node as Node, path);
+    for (const [k, v] of Object.entries(node)) walk(v, visit, `${path}.${k}`);
+  }
+}
+
+describe("provider JSON schema (generated from Zod)", () => {
+  const schema = PAGE_EXTRACTION_JSON_SCHEMA as Node;
+  const props = (n: unknown) => (n as { properties: Node }).properties;
+
   it("matches the Zod schema's fields", () => {
-    expect([...PAGE_EXTRACTION_JSON_SCHEMA.required].sort()).toEqual(Object.keys(PageExtraction.shape).sort());
-    expect([...PAGE_EXTRACTION_JSON_SCHEMA.properties.lines.items.required].sort()).toEqual(Object.keys(ExtractedLine.shape).sort());
+    expect(Object.keys(props(schema)).sort()).toEqual(Object.keys(PageExtraction.shape).sort());
+    const line = (props(schema).lines as { items: Node }).items;
+    expect(Object.keys(props(line)).sort()).toEqual(Object.keys(ExtractedLine.shape).sort());
+  });
+
+  it("sets additionalProperties: false and requires every property on all objects", () => {
+    let objects = 0;
+    walk(schema, (n, path) => {
+      if (n.type !== "object") return;
+      objects++;
+      expect(n.additionalProperties, path).toBe(false);
+      expect([...(n.required as string[])].sort(), path).toEqual(Object.keys(n.properties as Node).sort());
+    });
+    expect(objects).toBe(3);
+  });
+
+  it("contains no numeric or string-length constraints and no tuples", () => {
+    const forbidden = ["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf", "minLength", "maxLength", "minItems", "maxItems", "prefixItems"];
+    walk(schema, (n, path) => {
+      for (const k of forbidden) expect(k in n, `${path}.${k}`).toBe(false);
+    });
+  });
+
+  it("keeps region as a nullable array of numbers", () => {
+    const line = (props(schema).lines as { items: Node }).items;
+    expect(props(line).region).toEqual({ anyOf: [{ type: "array", items: { type: "number" } }, { type: "null" }] });
   });
 });

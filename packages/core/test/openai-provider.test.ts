@@ -78,10 +78,28 @@ describe("OpenAIProvider", () => {
 });
 
 describe("openAIConfigFromEnv", () => {
+  const terms = { CEA_PROVIDER_ZERO_RETENTION: "confirmed", CEA_PROVIDER_REGION: "us" };
+
+  it("refuses until zero-retention and US-region terms are attested", () => {
+    const keys = { OPENAI_API_KEY: "k", CEA_OPENAI_MODEL: "m" };
+    expect(() => openAIConfigFromEnv(keys)).toThrow(/CEA_PROVIDER_ZERO_RETENTION=confirmed and CEA_PROVIDER_REGION=us/);
+    expect(() => openAIConfigFromEnv({ ...keys, CEA_PROVIDER_ZERO_RETENTION: "confirmed", CEA_PROVIDER_REGION: "eu" })).toThrow(/CEA_PROVIDER_REGION=us/);
+    expect(() => openAIConfigFromEnv({ ...keys, CEA_PROVIDER_ZERO_RETENTION: "yes", CEA_PROVIDER_REGION: "us" })).toThrow(/ZERO_RETENTION/);
+    const err = (() => {
+      try {
+        openAIConfigFromEnv(keys);
+      } catch (e) {
+        return e;
+      }
+    })();
+    expect(err).toBeInstanceOf(ProviderError);
+    expect((err as ProviderError).transient).toBe(false);
+  });
+
   it("requires a key and an explicit model", () => {
-    expect(() => openAIConfigFromEnv({})).toThrow(/OPENAI_API_KEY/);
-    expect(() => openAIConfigFromEnv({ OPENAI_API_KEY: "k" })).toThrow(/CEA_OPENAI_MODEL/);
-    expect(openAIConfigFromEnv({ OPENAI_API_KEY: "k", CEA_OPENAI_MODEL: "m", OPENAI_BASE_URL: "https://us.example/v1" })).toEqual({
+    expect(() => openAIConfigFromEnv(terms)).toThrow(/OPENAI_API_KEY/);
+    expect(() => openAIConfigFromEnv({ ...terms, OPENAI_API_KEY: "k" })).toThrow(/CEA_OPENAI_MODEL/);
+    expect(openAIConfigFromEnv({ ...terms, OPENAI_API_KEY: "k", CEA_OPENAI_MODEL: "m", OPENAI_BASE_URL: "https://us.example/v1" })).toEqual({
       apiKey: "k",
       model: "m",
       baseUrl: "https://us.example/v1",
