@@ -9,6 +9,7 @@ interface GroundTruth {
   pageCount: number;
   header: { invoiceTotal: string };
   lines: { row: number; page: number; extendedPrice: string; sku: string }[];
+  charges: { type: string; amount: string; signedAmount: string }[];
 }
 
 async function files(dir: string, prefix = ""): Promise<string[]> {
@@ -49,7 +50,8 @@ describe("synthetic fixtures", () => {
     it(`${spec.name}: ground truth is internally consistent`, async () => {
       const gt = JSON.parse(await readFile(join(fixtureDir(spec.name), "ground-truth.json"), "utf8")) as GroundTruth;
       expect(gt.lines).toHaveLength(spec.lines.length);
-      const sum = gt.lines.reduce((a, l) => a.plus(l.extendedPrice), new Decimal(0));
+      expect(gt.charges).toHaveLength(spec.charges?.length ?? 0);
+      const sum = [...gt.lines.map((l) => l.extendedPrice), ...gt.charges.map((c) => c.signedAmount)].reduce((a, v) => a.plus(v), new Decimal(0));
       expect(sum.eq(gt.header.invoiceTotal)).toBe(true);
       const pages = await readdir(join(fixtureDir(spec.name), "extractions"));
       expect(pages).toHaveLength(gt.pageCount);
@@ -75,5 +77,18 @@ describe("synthetic fixtures", () => {
     expect(p2.lines[0]).toMatchObject({ sku: p1.lines.at(-1).sku, unitPrice: p1.lines.at(-1).unitPrice });
     const eu = JSON.parse(await readFile(join(fixtureDir("european-format"), "extractions", "page-002.json"), "utf8"));
     expect(eu.header).toMatchObject({ totalGrossWeight: "1.234,5 kg", totalNetWeight: "1.180 kg" });
+  });
+
+  it("records charges only in charges, with the discount printed unsigned", async () => {
+    const p1 = JSON.parse(await readFile(join(fixtureDir("freight-discount"), "extractions", "page-001.json"), "utf8"));
+    expect(p1.charges).toEqual([
+      { page: 1, type: "freight", description: "Ocean freight to Oakland", amount: "185.00" },
+      { page: 1, type: "discount", description: "Volume discount", amount: "120.00" },
+    ]);
+    expect(p1.lines.some((l: { description: string }) => /freight|discount/i.test(l.description))).toBe(false);
+    for (const name of ["clean-us-single-page", "multipage-split-rows", "european-format", "broken-math-unmatched"]) {
+      const dir = join(fixtureDir(name), "extractions");
+      for (const f of await readdir(dir)) expect(JSON.parse(await readFile(join(dir, f), "utf8")).charges, `${name}/${f}`).toEqual([]);
+    }
   });
 });

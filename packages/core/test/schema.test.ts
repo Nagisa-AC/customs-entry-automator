@@ -32,6 +32,7 @@ function validPage(): PageExtraction {
         region: [0.05, 0.3, 0.95, 0.33],
       },
     ],
+    charges: [{ page: 1, type: "freight", description: "Ocean freight", amount: "85.00" }],
   };
 }
 
@@ -85,6 +86,28 @@ describe("parsePageExtraction", () => {
     const result = parsePageExtraction(page);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.errors.join()).toContain("lines.0.page");
+  });
+
+  it("requires a charges list, with each charge's page matching the page", () => {
+    const noCharges: Partial<PageExtraction> = validPage();
+    delete noCharges.charges;
+    expect(parsePageExtraction(noCharges).ok).toBe(false);
+    expect(parsePageExtraction({ ...validPage(), charges: [] }).ok).toBe(true);
+    const page = validPage();
+    page.charges[0]!.page = 2;
+    const result = parsePageExtraction(page);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors.join()).toContain("charges.0.page");
+  });
+
+  it("keeps charge amounts as printed and accepts only the four charge types", () => {
+    const page = validPage();
+    page.charges[0]!.amount = "(1.250,00)";
+    const ok = parsePageExtraction(page);
+    expect(ok.ok && ok.value.charges[0]!.amount).toBe("(1.250,00)");
+    const bad = validPage() as unknown as { charges: { type: string }[] };
+    bad.charges[0]!.type = "tax";
+    expect(parsePageExtraction(bad).ok).toBe(false);
   });
 
   it("rejects out-of-range source regions", () => {

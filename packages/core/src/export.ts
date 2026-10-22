@@ -1,33 +1,59 @@
 import Decimal from "decimal.js";
 import type { MatchedLine } from "./catalog.ts";
 import { isBlockingFailure, type CheckResult } from "./checks.ts";
-import type { Amount, NormalizedLine } from "./normalizer.ts";
-import { RULE_IDS } from "./rules.ts";
+import type { Amount, NormalizedDocument } from "./normalizer.ts";
+import { reconcileCharges, RULE_IDS } from "./rules.ts";
+import { CHARGE_TYPES, type ChargeType } from "./schema.ts";
 
 export const EXPORTER_VERSION = "generic-csv-v1";
-export const REPORT_VERSION = "report-v2";
-
-const ADJUSTMENT_TERM = /\b(freight|shipping|discount|rebate|insurance|surcharge|fees?|charges?)\b/i;
+export const REPORT_VERSION = "report-v3";
 
 /**
- * Heuristic count of lines that look like freight, discount or other
- * adjustments, which M1 doesn't support and which make R2 fail. Not a rule:
- * it never changes status or blocks anything.
+ * Counter for the extracted charges (freight, discounts and other
+ * adjustments), which M1 doesn't support and which make R2 fail. Not a rule:
+ * it never changes status or blocks anything. Sums are signed (an unsigned
+ * discount counts as negative) and null when an amount is unreadable.
  */
-export interface AdjustmentLines {
-  probableLines: { row: number; page: number; reason: "no-sku" | "adjustment-term"; term: string | null }[];
+export interface Adjustments {
+  byType: Record<ChargeType, { count: number; sum: string | null }>;
+  charges: { index: number; page: number; type: ChargeType; description: string | null; amount: string | null; signedAmount: string | null; signInferred: boolean }[];
+  sum: string | null;
+  signInferred: boolean;
   r2Failed: boolean;
+  /** Lines plus charges vs. the invoice total within R2's tolerance; null when it can't be computed. */
+  linesPlusChargesMatchTotal: boolean | null;
 }
 
-export function countAdjustmentLines(lines: readonly NormalizedLine[], checks: readonly CheckResult[]): AdjustmentLines {
-  const probableLines = lines.flatMap((l): AdjustmentLines["probableLines"] => {
-    const term = l.description ? (ADJUSTMENT_TERM.exec(l.description)?.[1]?.toLowerCase() ?? null) : null;
-    if (term) return [{ row: l.row, page: l.page, reason: "adjustment-term", term }];
-    if (l.sku === null) return [{ row: l.row, page: l.page, reason: "no-sku", term: null }];
-    return [];
-  });
-  const r2Failed = checks.some((c) => c.ruleId === RULE_IDS.footerTotal && c.outcome === "fail");
-  return { probableLines, r2Failed };
+function signedSum(amounts: readonly (Amount | null)[]): string | null {
+  if (amounts.some((a) => a === null)) return null;
+  const present = amounts as Amount[];
+  const scale = Math.max(0, ...present.map((a) => a.scale));
+  return present.reduce((acc, a) => acc.plus(a.value), new Decimal(0)).toFixed(scale);
+}
+
+export function summarizeAdjustments(doc: NormalizedDocument, checks: readonly CheckResult[]): Adjustments {
+  const byType = Object.fromEntries(
+    CHARGE_TYPES.map((type) => {
+      const of = doc.charges.filter((c) => c.type === type);
+      return [type, { count: of.length, sum: signedSum(of.map((c) => c.signedAmount)) }];
+    }),
+  ) as Adjustments["byType"];
+  return {
+    byType,
+    charges: doc.charges.map((c) => ({
+      index: c.index,
+      page: c.page,
+      type: c.type,
+      description: c.description,
+      amount: c.amount?.raw ?? null,
+      signedAmount: c.signedAmount ? new Decimal(c.signedAmount.value).toFixed(c.signedAmount.scale) : null,
+      signInferred: c.signInferred,
+    })),
+    sum: signedSum(doc.charges.map((c) => c.signedAmount)),
+    signInferred: doc.charges.some((c) => c.signInferred),
+    r2Failed: checks.some((c) => c.ruleId === RULE_IDS.footerTotal && c.outcome === "fail"),
+    linesPlusChargesMatchTotal: reconcileCharges(doc)?.matchesTotal ?? null,
+  };
 }
 
 const FORMULA_START = /^[=+\-@\t\r]/;
@@ -95,7 +121,7 @@ export interface ReportInput {
   };
   lineCount: number;
   matched: number;
-  adjustments: AdjustmentLines;
+  adjustments: Adjustments;
   checks: CheckResult[];
 }
 

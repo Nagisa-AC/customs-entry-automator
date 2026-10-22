@@ -49,17 +49,25 @@ unmatched SKU (R4) blocks, so a row with no HTS never reaches `lines.csv`.
 Checks follow the v0 design's rules: R1 line math (0.01), R2 footer total
 (0.01 × line count), R3 net ≤ gross weight, R4 SKU found in the SKU sheet, R5 SKU,
 quantity, unit price and origin on every line, R6 same SKU and price across a
-page break (warning), R7 page continuity. `report.json` also has a heuristic
-`adjustments` counter (not a rule): lines with no SKU or with freight,
-discount, insurance or charge terms, and whether R2 failed alongside them. Saved raw extractions are reused by cache key,
+page break (warning), R7 page continuity. Freight, discounts, insurance and
+other non-product charges are extracted into `charges` (never `lines`, never
+dropped) and stay out of both CSVs. R2 still compares only the lines to the
+total, so an invoice with charges fails and goes to review; its finding also
+says whether lines plus charges match the total. Code applies the sign: a
+printed minus or parentheses wins, and only an unsigned discount is treated as
+negative (the finding says so). `report.json` has an `adjustments` counter
+(not a rule): charges by type, their signed sum, whether a sign was inferred,
+whether R2 failed, and whether lines plus charges match. Saved raw extractions are reused by cache key,
 so re-runs never call the model; `--from <stage>` re-runs from any stage
 using the saved outputs of earlier ones.
 
-To use a real model: `--provider openai` (`OPENAI_API_KEY`, `CEA_OPENAI_MODEL`,
-optional `OPENAI_BASE_URL`) or `--provider anthropic` (`ANTHROPIC_API_KEY`,
-`CEA_ANTHROPIC_MODEL`, optional `ANTHROPIC_BASE_URL`).
-See `.env.example`. Without keys, only invoices that have recorded extractions
-can run.
+`--provider auto` (the default) and `--provider fixture` only replay recorded
+extractions and fail when there are none; they never call a model, even with
+API keys set. A real model runs only when named: `--provider openai`
+(`OPENAI_API_KEY`, `CEA_OPENAI_MODEL`, optional `OPENAI_BASE_URL`) or
+`--provider anthropic` (`ANTHROPIC_API_KEY`, `CEA_ANTHROPIC_MODEL`, optional
+`ANTHROPIC_BASE_URL`). See `.env.example`. The same applies to
+`cea compare --providers`.
 
 ## Comparing providers
 

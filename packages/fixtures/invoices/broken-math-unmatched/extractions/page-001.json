@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "extraction-v1",
+  "schemaVersion": "extraction-v2",
   "page": 1,
   "header": {
     "invoiceNumber": "BK-1003",
@@ -108,5 +108,6 @@
         0.2955
       ]
     }
-  ]
+  ],
+  "charges": []
 }

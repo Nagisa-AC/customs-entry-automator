@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "extraction-v1",
+  "schemaVersion": "extraction-v2",
   "page": 2,
   "header": {
     "invoiceNumber": null,
@@ -355,5 +355,6 @@
         0.4722
       ]
     }
-  ]
+  ],
+  "charges": []
 }

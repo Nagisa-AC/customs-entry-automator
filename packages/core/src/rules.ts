@@ -10,7 +10,7 @@ import type { Amount, NormalizedDocument, NormalizedLine, Weight, WeightUnit } f
  * Convention: `expected` is what code computed or requires; `actual` is what
  * the document says.
  */
-export const RULE_SET_VERSION = "v0.2";
+export const RULE_SET_VERSION = "v0.3";
 
 export const RULE_IDS = {
   lineMath: "R1-line-math",
@@ -84,10 +84,61 @@ export const lineMath: Rule = {
   },
 };
 
+export interface ChargeReconciliation {
+  /** Sum of line extended prices plus signed charges, at the printed precision; null when a charge amount is unreadable. */
+  linesPlusCharges: string | null;
+  /** Whether that sum equals the invoice total within R2's tolerance; null when it can't be computed. */
+  matchesTotal: boolean | null;
+  tolerance: string;
+  unreadableCharges: number[];
+  inferredSigns: number[];
+}
+
+/**
+ * Lines plus signed charges vs. the invoice total, with R2's tolerance.
+ * Evidence for R2's finding and the report's adjustments counter; it never
+ * changes R2's outcome. Null when R2 itself can't compare (no total or a
+ * line without an extended price).
+ */
+export function reconcileCharges(doc: NormalizedDocument): ChargeReconciliation | null {
+  const total = doc.header.invoiceTotal;
+  if (!total || doc.lines.some((l) => !l.extendedPrice)) return null;
+  const tolerance = CENT.times(doc.lines.length);
+  const unreadableCharges = doc.charges.filter((c) => !c.signedAmount).map((c) => c.index);
+  const inferredSigns = doc.charges.filter((c) => c.signInferred).map((c) => c.index);
+  if (unreadableCharges.length) {
+    return { linesPlusCharges: null, matchesTotal: null, tolerance: tolerance.toFixed(2), unreadableCharges, inferredSigns };
+  }
+  const amounts = [...doc.lines.map((l) => l.extendedPrice as Amount), ...doc.charges.map((c) => c.signedAmount as Amount)];
+  const sum = amounts.reduce((acc, a) => acc.plus(dec(a)), new Decimal(0));
+  const scale = Math.max(total.scale, ...amounts.map((a) => a.scale));
+  return {
+    linesPlusCharges: sum.toFixed(scale),
+    matchesTotal: dec(total).minus(sum).abs().lte(tolerance),
+    tolerance: tolerance.toFixed(2),
+    unreadableCharges,
+    inferredSigns,
+  };
+}
+
+function chargeEvidence(doc: NormalizedDocument): string {
+  const rec = reconcileCharges(doc);
+  if (!rec) return "";
+  if (!doc.charges.length) return " No charges were extracted, so lines plus charges equal the lines alone.";
+  const list = (ns: number[]) => ns.join(", ");
+  if (rec.linesPlusCharges === null) {
+    return ` Lines plus charges can't be compared to the total: charge ${list(rec.unreadableCharges)} has no readable amount.`;
+  }
+  const inferred = rec.inferredSigns.length
+    ? ` The sign of charge ${list(rec.inferredSigns)} was inferred: a discount printed without a sign was treated as negative.`
+    : "";
+  return ` Lines plus ${doc.charges.length} charge(s) sum to ${rec.linesPlusCharges}, which ${rec.matchesTotal ? "matches" : "does not match"} the invoice total within ${rec.tolerance}.${inferred}`;
+}
+
 export const footerTotal: Rule = {
   id: RULE_IDS.footerTotal,
-  version: "1",
-  description: "Sum of extended prices equals the printed total within 0.01 × line count.",
+  version: "2",
+  description: "Sum of extended prices equals the printed total within 0.01 × line count; charges are reported, never added.",
   run(doc) {
     const r = maker(this, "blocking");
     const base = { row: null, page: null, field: "invoiceTotal" };
@@ -112,7 +163,7 @@ export const footerTotal: Rule = {
         actual: dec(total).toFixed(scale),
         message: ok
           ? `Lines sum to the invoice total within ${tolerance.toFixed(2)}.`
-          : `Lines sum to ${sum.toFixed(scale)} but the invoice total is ${total.raw} (difference ${diff.toFixed(scale)}, tolerance ${tolerance.toFixed(2)}). Assume a row was missed or misread before blaming the invoice; also look for freight, discounts or other charges.`,
+          : `Lines sum to ${sum.toFixed(scale)} but the invoice total is ${total.raw} (difference ${diff.toFixed(scale)}, tolerance ${tolerance.toFixed(2)}). Assume a row was missed or misread before blaming the invoice.${chargeEvidence(doc)}`,
       }),
     ];
   },

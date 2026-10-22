@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "extraction-v1",
+  "schemaVersion": "extraction-v2",
   "page": 1,
   "header": {
     "invoiceNumber": "PX-77310",
@@ -317,5 +317,6 @@
         0.5177
       ]
     }
-  ]
+  ],
+  "charges": []
 }
