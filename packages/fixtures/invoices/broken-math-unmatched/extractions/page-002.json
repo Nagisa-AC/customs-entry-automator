@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "extraction-v2",
+  "page": 2,
+  "header": {
+    "invoiceNumber": null,
+    "invoiceDate": null,
+    "currency": null,
+    "sellerName": null,
+    "buyerName": null,
+    "incoterms": null,
+    "invoiceTotal": "27,639.75",
+    "totalGrossWeight": "310 KG",
+    "totalNetWeight": "325.4 KG"
+  },
+  "lines": [
+    {
+      "page": 2,
+      "rowOnPage": 1,
+      "sku": "BK-1007",
+      "description": "Stainless flat washer M8",
+      "quantity": "350",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "8.79",
+      "extendedPrice": "3,076.50",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1098,
+        0.9641,
+        0.1288
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 2,
+      "sku": "BK-1035",
+      "description": "Drawer slide full extension 450mm",
+      "quantity": "675",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "20.92",
+      "extendedPrice": "14,121.00",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1301,
+        0.9641,
+        0.149
+      ]
+    }
+  ],
+  "charges": []
+}

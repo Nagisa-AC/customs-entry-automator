@@ -1,0 +1,360 @@
+{
+  "schemaVersion": "extraction-v2",
+  "page": 2,
+  "header": {
+    "invoiceNumber": null,
+    "invoiceDate": null,
+    "currency": null,
+    "sellerName": null,
+    "buyerName": null,
+    "incoterms": null,
+    "invoiceTotal": null,
+    "totalGrossWeight": null,
+    "totalNetWeight": null
+  },
+  "lines": [
+    {
+      "page": 2,
+      "rowOnPage": 1,
+      "sku": null,
+      "description": "with countersunk mounting holes",
+      "quantity": "150",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "18.50",
+      "extendedPrice": "2,775.00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": true,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1098,
+        0.9641,
+        0.1288
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 2,
+      "sku": "PX-1112",
+      "description": "Brass cabinet hinge 50mm",
+      "quantity": "825",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "9.39",
+      "extendedPrice": "7,746.75",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1301,
+        0.9641,
+        0.149
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 3,
+      "sku": "PX-1119",
+      "description": "Drawer slide full extension 450mm",
+      "quantity": "275",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "0.50",
+      "extendedPrice": "137.50",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1503,
+        0.9641,
+        0.1692
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 4,
+      "sku": "PX-1126",
+      "description": "Cordless drill battery pack 18V 2.0Ah lithium-ion",
+      "quantity": "350",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "21.23",
+      "extendedPrice": "7,430.50",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1705,
+        0.9641,
+        0.1894
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 5,
+      "sku": "PX-1133",
+      "description": "Rubber grommet assortment kit",
+      "quantity": "200",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "20.96",
+      "extendedPrice": "4,192.00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1907,
+        0.9641,
+        0.2096
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 6,
+      "sku": "PX-1140",
+      "description": "Aluminium T-slot extrusion 1m",
+      "quantity": "350",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "7.59",
+      "extendedPrice": "2,656.50",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2109,
+        0.9641,
+        0.2298
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 7,
+      "sku": "PX-1147",
+      "description": "PVC conduit elbow 20mm",
+      "quantity": "1,000",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "2.52",
+      "extendedPrice": "2,520.00",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2311,
+        0.9641,
+        0.25
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 8,
+      "sku": "PX-1154",
+      "description": "Copper cable lug 16mm2",
+      "quantity": "825",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "10.44",
+      "extendedPrice": "8,613.00",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2513,
+        0.9641,
+        0.2702
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 9,
+      "sku": "PX-1161",
+      "description": "Carbide drill bit 6mm",
+      "quantity": "325",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "2.89",
+      "extendedPrice": "939.25",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2715,
+        0.9641,
+        0.2904
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 10,
+      "sku": "PX-1168",
+      "description": "Zinc-plated hex bolt M8x40",
+      "quantity": "125",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "5.89",
+      "extendedPrice": "736.25",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2917,
+        0.9641,
+        0.3106
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 11,
+      "sku": "PX-1175",
+      "description": "Stainless flat washer M8",
+      "quantity": "700",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "11.82",
+      "extendedPrice": "8,274.00",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3119,
+        0.9641,
+        0.3308
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 12,
+      "sku": "PX-1182",
+      "description": "Nylon insert lock nut M8",
+      "quantity": "250",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "16.71",
+      "extendedPrice": "4,177.50",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3321,
+        0.9641,
+        0.351
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 13,
+      "sku": "PX-1189",
+      "description": "Steel L-bracket 75mm with countersunk mounting holes",
+      "quantity": "825",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "16.78",
+      "extendedPrice": "13,843.50",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3523,
+        0.9641,
+        0.3712
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 14,
+      "sku": "PX-1196",
+      "description": "Brass cabinet hinge 50mm",
+      "quantity": "425",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "3.72",
+      "extendedPrice": "1,581.00",
+      "countryOfOrigin": "CN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3725,
+        0.9641,
+        0.3914
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 15,
+      "sku": "PX-1203",
+      "description": "Drawer slide full extension 450mm",
+      "quantity": "550",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "15.69",
+      "extendedPrice": "8,629.50",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.3927,
+        0.9641,
+        0.4116
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 16,
+      "sku": "PX-1210",
+      "description": "Cordless drill battery pack 18V 2.0Ah lithium-ion",
+      "quantity": "450",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "17.97",
+      "extendedPrice": "8,086.50",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.4129,
+        0.9641,
+        0.4318
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 17,
+      "sku": "PX-1217",
+      "description": "Rubber grommet assortment kit",
+      "quantity": "50",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "1.90",
+      "extendedPrice": "95.00",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.4331,
+        0.9641,
+        0.452
+      ]
+    },
+    {
+      "page": 2,
+      "rowOnPage": 18,
+      "sku": "PX-1224",
+      "description": "Aluminium T-slot",
+      "quantity": null,
+      "unitOfMeasure": null,
+      "unitPrice": null,
+      "extendedPrice": null,
+      "countryOfOrigin": null,
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": true,
+      "region": [
+        0.049,
+        0.4533,
+        0.9641,
+        0.4722
+      ]
+    }
+  ],
+  "charges": []
+}

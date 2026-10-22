@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "extraction-v2",
+  "page": 1,
+  "header": {
+    "invoiceNumber": "BK-1003",
+    "invoiceDate": "2026-10-02",
+    "currency": "USD",
+    "sellerName": "Brightline Fasteners Ltd. (synthetic)",
+    "buyerName": "Example Importer LLC (synthetic)",
+    "incoterms": "FOB Xiamen",
+    "invoiceTotal": null,
+    "totalGrossWeight": null,
+    "totalNetWeight": null
+  },
+  "lines": [
+    {
+      "page": 1,
+      "rowOnPage": 1,
+      "sku": "BK-1000",
+      "description": "Zinc-plated hex bolt M8x40",
+      "quantity": "275",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "6.24",
+      "extendedPrice": "1,716.00",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1957,
+        0.9641,
+        0.2146
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 2,
+      "sku": "BK-1014",
+      "description": "Nylon insert lock nut M8",
+      "quantity": "25",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "8.19",
+      "extendedPrice": "1.00",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2159,
+        0.9641,
+        0.2348
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 3,
+      "sku": "BK-1021",
+      "description": "Steel L-bracket 75mm with countersunk mounting holes",
+      "quantity": "275",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "17.22",
+      "extendedPrice": "4,735.50",
+      "countryOfOrigin": null,
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2361,
+        0.9641,
+        0.2551
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 4,
+      "sku": "BK-1028",
+      "description": "Brass cabinet hinge 50mm",
+      "quantity": "325",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "2.81",
+      "extendedPrice": "913.25",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2563,
+        0.9641,
+        0.2753
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 5,
+      "sku": "BK-1007",
+      "description": "Stainless flat washer M8",
+      "quantity": "350",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "8.79",
+      "extendedPrice": "3,076.50",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2765,
+        0.9641,
+        0.2955
+      ]
+    }
+  ],
+  "charges": []
+}

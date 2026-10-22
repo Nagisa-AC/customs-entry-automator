@@ -1,0 +1,126 @@
+import { describe, expect, it } from "vitest";
+import {
+  buildReport,
+  escapeFormula,
+  normalizeDocument,
+  summarizeAdjustments,
+  toLinesCsv,
+  type CheckResult,
+  type ExtractedCharge,
+  type MatchedLine,
+  type ReportInput,
+} from "../src/index.ts";
+import { cleanDoc, line } from "./helpers.ts";
+
+function matched(overrides: Parameters<typeof line>[0] = {}): MatchedLine[] {
+  const doc = cleanDoc();
+  doc.lines = [line(overrides)];
+  return normalizeDocument(doc).lines.map((l) => ({ ...l, match: { status: "matched", hts10: "0101210010", htsSource: "catalog-matched", sheetRow: 2 } }));
+}
+
+const fail = (row: number, severity: "blocking" | "warning" = "blocking"): CheckResult => ({
+  ruleId: "R1-line-math", ruleVersion: "2", severity, outcome: "fail", row, page: 1, field: null, expected: null, actual: null, message: "",
+});
+
+describe("escapeFormula", () => {
+  it.each(["=1+1", "+1", "-1", "@SUM(A1)", "\tx", "\rx"])("escapes %j", (s) => {
+    expect(escapeFormula(s)).toBe(`'${s}`);
+  });
+  it("leaves ordinary text alone", () => {
+    expect(escapeFormula("Steel bracket")).toBe("Steel bracket");
+  });
+});
+
+describe("toLinesCsv", () => {
+  it("writes a header and one CRLF-terminated row per line, keeping HTS leading zeros and printed precision", () => {
+    const csv = toLinesCsv(matched(), "USD", []);
+    const [header, row, end] = csv.split("\r\n");
+    expect(header).toBe("row,page,sku,description,quantity,unit_of_measure,unit_price,extended_price,currency,country_of_origin,hts10,hts_source,status,issues");
+    expect(row).toBe("1,1,AB-100,Steel bracket,10,PCS,2.50,25.00,USD,CN,0101210010,catalog-matched,ok,");
+    expect(end).toBe("");
+  });
+
+  it("escapes formula injection in text fields and quotes commas, quotes and newlines", () => {
+    const csv = toLinesCsv(matched({ description: '=HYPERLINK("http://x","click"), more\nline', sku: "@ab" }), "USD", []);
+    const row = csv.split("\r\n")[1]!;
+    expect(row).toContain(`'@AB`);
+    expect(row).toContain(`"'=HYPERLINK(""http://x"",""click""), more\nline"`);
+  });
+
+  it("marks rows with blocking failures as needs_review and lists issues", () => {
+    const csv = toLinesCsv(matched(), "USD", [fail(1), { ...fail(1, "warning"), ruleId: "R6-duplicate-lines" }]);
+    expect(csv.split("\r\n")[1]).toMatch(/,needs_review,R1-line-math;R6-duplicate-lines\(warning\)$/);
+    const warnOnly = toLinesCsv(matched(), "USD", [fail(1, "warning")]);
+    expect(warnOnly.split("\r\n")[1]).toMatch(/,ok,R1-line-math\(warning\)$/);
+  });
+});
+
+describe("buildReport", () => {
+  const input = (checks: CheckResult[], pageStatus = "extracted"): ReportInput => ({
+    input: { pdfFile: "a.pdf", pdfSha256: "x", pageCount: 1, skuSheetFile: "s.csv", skuSheetSha256: "y" },
+    versions: {},
+    extraction: { provider: "p", model: "m", pages: [{ page: 1, status: pageStatus, error: null, latencyMs: 1, inputTokens: null, outputTokens: null }] },
+    lineCount: 2,
+    matched: 1,
+    adjustments: summarizeAdjustments(normalizeDocument(cleanDoc()), []),
+    checks,
+  });
+
+  it("is ready_for_approval only with no blocking failures", () => {
+    expect(buildReport(input([fail(1, "warning")])).status).toBe("ready_for_approval");
+    expect(buildReport(input([fail(1)])).status).toBe("needs_review");
+    expect(buildReport(input([], "failed")).status).toBe("failed");
+  });
+
+  it("summarizes counts", () => {
+    const r = buildReport(input([fail(1), fail(2, "warning"), { ...fail(1), outcome: "pass" }]));
+    expect(r.summary).toEqual({ lines: 2, checks: 3, passed: 1, failed: 2, skipped: 0, blocking: 1, warnings: 1, catalogMatched: 1, catalogUnmatched: 1 });
+  });
+});
+
+describe("summarizeAdjustments", () => {
+  const r2 = (outcome: "pass" | "fail"): CheckResult => ({
+    ruleId: "R2-footer-total", ruleVersion: "2", severity: "blocking", outcome, row: null, page: null, field: "invoiceTotal", expected: null, actual: null, message: "",
+  });
+  const charge = (type: ExtractedCharge["type"], amount: string | null, page = 2): ExtractedCharge => ({ page, type, description: `${type} charge`, amount });
+
+  it("reports charges by type with signed sums, inferring an unsigned discount as negative", () => {
+    const doc = cleanDoc();
+    doc.header.invoiceTotal = "$1,595.00";
+    doc.charges = [charge("freight", "80.00"), charge("discount", "10.00")];
+    const result = summarizeAdjustments(normalizeDocument(doc), [r2("fail")]);
+    expect(result).toEqual({
+      byType: {
+        freight: { count: 1, sum: "80.00" },
+        discount: { count: 1, sum: "-10.00" },
+        insurance: { count: 0, sum: "0" },
+        other: { count: 0, sum: "0" },
+      },
+      charges: [
+        { index: 1, page: 2, type: "freight", description: "freight charge", amount: "80.00", signedAmount: "80.00", signInferred: false },
+        { index: 2, page: 2, type: "discount", description: "discount charge", amount: "10.00", signedAmount: "-10.00", signInferred: true },
+      ],
+      sum: "70.00",
+      signInferred: true,
+      r2Failed: true,
+      linesPlusChargesMatchTotal: true,
+    });
+  });
+
+  it("lets a printed sign win and never infers a sign for other charge types", () => {
+    const doc = cleanDoc();
+    doc.charges = [charge("discount", "(10.00)"), charge("other", "-5.00"), charge("insurance", "15.00")];
+    const result = summarizeAdjustments(normalizeDocument(doc), [r2("pass")]);
+    expect(result.charges.map((c) => [c.signedAmount, c.signInferred])).toEqual([["-10.00", false], ["-5.00", false], ["15.00", false]]);
+    expect(result).toMatchObject({ sum: "0.00", signInferred: false, r2Failed: false, linesPlusChargesMatchTotal: true });
+  });
+
+  it("reports no charges as zero, and an unreadable amount as unknown", () => {
+    const none = summarizeAdjustments(normalizeDocument(cleanDoc()), [r2("pass")]);
+    expect(none).toMatchObject({ charges: [], sum: "0", signInferred: false, linesPlusChargesMatchTotal: true });
+    const doc = cleanDoc();
+    doc.charges = [charge("freight", "n/a")];
+    const unreadable = summarizeAdjustments(normalizeDocument(doc), [r2("pass")]);
+    expect(unreadable).toMatchObject({ sum: null, byType: { freight: { count: 1, sum: null } }, linesPlusChargesMatchTotal: null });
+  });
+});

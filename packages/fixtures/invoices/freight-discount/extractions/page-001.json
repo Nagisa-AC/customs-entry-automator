@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "extraction-v2",
+  "page": 1,
+  "header": {
+    "invoiceNumber": "SM-5521",
+    "invoiceDate": "2026-10-05",
+    "currency": "USD",
+    "sellerName": "Summit Coast Hardware Co. (synthetic)",
+    "buyerName": "Example Importer LLC (synthetic)",
+    "incoterms": "CFR Oakland",
+    "invoiceTotal": "24,436.75",
+    "totalGrossWeight": "980 KG",
+    "totalNetWeight": "905.5 KG"
+  },
+  "lines": [
+    {
+      "page": 1,
+      "rowOnPage": 1,
+      "sku": "SM-1000",
+      "description": "Zinc-plated hex bolt M8x40",
+      "quantity": "250",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "8.80",
+      "extendedPrice": "2,200.00",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.1957,
+        0.9641,
+        0.2146
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 2,
+      "sku": "SM-1007",
+      "description": "Stainless flat washer M8",
+      "quantity": "525",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "17.15",
+      "extendedPrice": "9,003.75",
+      "countryOfOrigin": "IN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2159,
+        0.9641,
+        0.2348
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 3,
+      "sku": "SM-1014",
+      "description": "Nylon insert lock nut M8",
+      "quantity": "275",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "17.12",
+      "extendedPrice": "4,708.00",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2361,
+        0.9641,
+        0.2551
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 4,
+      "sku": "SM-1021",
+      "description": "Steel L-bracket 75mm with countersunk mounting holes",
+      "quantity": "925",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "5.62",
+      "extendedPrice": "5,198.50",
+      "countryOfOrigin": "TW",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2563,
+        0.9641,
+        0.2753
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 5,
+      "sku": "SM-1028",
+      "description": "Brass cabinet hinge 50mm",
+      "quantity": "100",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "18.69",
+      "extendedPrice": "1,869.00",
+      "countryOfOrigin": "VN",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2765,
+        0.9641,
+        0.2955
+      ]
+    },
+    {
+      "page": 1,
+      "rowOnPage": 6,
+      "sku": "SM-1035",
+      "description": "Drawer slide full extension 450mm",
+      "quantity": "250",
+      "unitOfMeasure": "PCS",
+      "unitPrice": "5.57",
+      "extendedPrice": "1,392.50",
+      "countryOfOrigin": "MX",
+      "continuedFromPreviousPage": false,
+      "continuesOnNextPage": false,
+      "region": [
+        0.049,
+        0.2967,
+        0.9641,
+        0.3157
+      ]
+    }
+  ],
+  "charges": [
+    {
+      "page": 1,
+      "type": "freight",
+      "description": "Ocean freight to Oakland",
+      "amount": "185.00"
+    },
+    {
+      "page": 1,
+      "type": "discount",
+      "description": "Volume discount",
+      "amount": "120.00"
+    }
+  ]
+}
