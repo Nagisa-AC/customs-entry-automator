@@ -28,10 +28,23 @@ export function anthropicConfigFromEnv(env: NodeJS.ProcessEnv = process.env): An
 interface MessagesResponse {
   content?: { type: string; text?: string }[];
   stop_reason?: string;
-  usage?: { input_tokens?: number; output_tokens?: number };
+  usage?: { input_tokens?: number; output_tokens?: number; inference_geo?: unknown };
 }
 
-/** Anthropic Messages API with JSON-schema structured output. No tools. */
+/** Sent on every request; the data-terms guard only admits CEA_PROVIDER_REGION=us. */
+export const ANTHROPIC_INFERENCE_GEO = "us";
+
+/**
+ * Fails closed unless the response reports US inference. This verifies, it
+ * doesn't prevent: a rejected page was already processed wherever it ran.
+ */
+function assertUsInference(geo: unknown): void {
+  if (geo === ANTHROPIC_INFERENCE_GEO) return;
+  const reported = typeof geo === "string" && /^[a-z0-9_-]{1,32}$/i.test(geo) ? `"${geo}"` : geo === undefined ? "nothing" : "an unrecognised value";
+  throw new ProviderError(`inference location not proven: requested inference_geo "${ANTHROPIC_INFERENCE_GEO}", response reported ${reported}; result discarded`, false);
+}
+
+/** Anthropic Messages API with JSON-schema structured output and US-only inference. No tools. */
 export class AnthropicProvider implements ExtractionProvider {
   readonly id = "anthropic";
   readonly model: string;
@@ -59,6 +72,7 @@ export class AnthropicProvider implements ExtractionProvider {
         },
       ],
       output_config: { format: { type: "json_schema", schema: PAGE_EXTRACTION_JSON_SCHEMA } },
+      inference_geo: ANTHROPIC_INFERENCE_GEO,
     };
     const headers: Record<string, string> = {
       "content-type": "application/json",
@@ -79,9 +93,11 @@ export class AnthropicProvider implements ExtractionProvider {
       throw new ProviderError("network error", true);
     }
     if (!res.ok) {
-      throw new ProviderError(`HTTP ${res.status}`, res.status === 429 || res.status >= 500);
+      const hint = res.status === 400 ? " (models before Claude 4.6 reject inference_geo)" : "";
+      throw new ProviderError(`HTTP ${res.status}${hint}`, res.status === 429 || res.status >= 500);
     }
     const data = (await res.json()) as MessagesResponse;
+    assertUsInference(data.usage?.inference_geo);
     if (data.stop_reason === "refusal") throw new ProviderError("model refused the request", false);
     if (data.stop_reason === "max_tokens") throw new ProviderError("response truncated at max_tokens", false);
     const text = data.content?.filter((c) => c.type === "text").map((c) => c.text ?? "").join("");

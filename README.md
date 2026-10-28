@@ -69,6 +69,20 @@ API keys set. A real model runs only when named: `--provider openai`
 `ANTHROPIC_BASE_URL`). See `.env.example`. The same applies to
 `cea compare --providers`.
 
+Every Anthropic request sets `inference_geo: "us"` (US-only inference, Claude
+4.6 and later; older models reject it with HTTP 400). US-only inference is
+priced at 1.1× the standard rate, so `--prices` for `anthropic` should include
+that. A response whose `usage.inference_geo` is missing or anything other than
+`"us"` fails the page (not retried); the result is discarded and the page
+record holds only the reason. That check verifies, it doesn't prevent: by the
+time a non-US response is rejected, the page was already processed there. The
+real protection is the request setting; the response check catches
+misconfiguration (a proxy, a wrong base URL, a model that ignores it).
+
+The OpenAI provider does not enforce US processing in code; region depends on
+OpenAI project settings and endpoint. Don't use it for real broker documents
+until that's configured and verified.
+
 ## Comparing providers
 
 ```sh
@@ -87,9 +101,14 @@ tokens and cost (when `--prices` gives USD per million tokens). Offline,
 
 **Real broker invoices:** do not run any until the provider account is
 confirmed for zero data retention and US-region processing. Real providers
-refuse to start until the operator sets `CEA_PROVIDER_ZERO_RETENTION=confirmed`
-and `CEA_PROVIDER_REGION=us`, which should only be done after verifying the
-contract terms.
+refuse to start without `CEA_PROVIDER_ZERO_RETENTION=confirmed` and
+`CEA_PROVIDER_REGION=us`. Set them per command, inline, only after verifying
+the contract terms, and never in `.env` or a shell profile:
+
+```sh
+CEA_PROVIDER_ZERO_RETENTION=confirmed CEA_PROVIDER_REGION=us \
+  pnpm cea run invoice.pdf --skus skus.xlsx --provider anthropic
+```
 
 Exit codes: `0` ready for approval, `1` needs review or failed (for
 `run-set`: any invoice), `2` usage or fatal error. `lines.csv` is a generic development artifact, not a

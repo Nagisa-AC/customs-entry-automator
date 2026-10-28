@@ -42,7 +42,9 @@ compare additionally needs ground-truth.json. --prices is JSON:
 Without blocking findings the lines go to lines.csv. With any blocking finding only
 lines.review.csv is written (affected rows marked needs_review) and the exit code is 1.
 Real providers also need CEA_PROVIDER_ZERO_RETENTION=confirmed and CEA_PROVIDER_REGION=us,
-set only after verifying the account's contract terms.
+set inline on the command only after verifying the account's contract terms (never in .env
+or a shell profile). anthropic requests US-only inference and rejects any response that
+doesn't report it.
 exit codes: 0 ready_for_approval, 1 needs_review or failed (run-set: any invoice), 2 usage or fatal error.`;
 
 class UsageError extends Error {}
