@@ -12,3 +12,6 @@ export * from "./extract/stitch.ts";
 export * from "./extract/providers/fixture.ts";
 export * from "./extract/providers/openai.ts";
 export * from "./extract/providers/data-terms.ts";
+export * from "./catalog.ts";
+export * from "./export.ts";
+export * from "./pipeline.ts";

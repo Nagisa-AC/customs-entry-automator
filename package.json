@@ -12,7 +12,8 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
-    "cea": "tsx apps/cli/src/main.ts"
+    "cea": "tsx apps/cli/src/main.ts",
+    "m1:labeled-set": "tsx apps/cli/src/main.ts run-set packages/fixtures/invoices"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
