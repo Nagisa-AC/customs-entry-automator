@@ -141,6 +141,7 @@ export async function extract(pages: readonly PageInput[], options: ExtractOptio
     } else {
       const result = await callProvider(provider, input, callOpts);
       if ("error" in result) {
+        await writeFile(validPath, JSON.stringify({ page: input.page, status: "failed", error: result.error }, null, 2) + "\n");
         outcomes.push({ ...base, status: "failed", error: result.error, cached: false, latencyMs: null, usage: null, extraction: null });
         continue;
       }

@@ -123,7 +123,8 @@ describe("extract()", () => {
     const [o] = await extract(inputs(1), { provider: p, outDir: dir, retryDelayMs: 1 });
     expect(p.calls).toBe(1);
     expect(o).toMatchObject({ status: "failed", error: "provider test failed after 1 attempt(s): HTTP 400" });
-    expect(await readdir(dir)).toEqual([]);
+    expect(await readdir(dir)).toEqual(["page-001.json"]);
+    expect(JSON.parse(await readFile(join(dir, "page-001.json"), "utf8"))).toEqual({ page: 1, status: "failed", error: o!.error });
   });
 
   it("gives up after bounded retries", async () => {
