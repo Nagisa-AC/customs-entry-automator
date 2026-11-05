@@ -8,7 +8,7 @@ import { z } from "zod";
  * once the document's decimal format is known; the model never does math.
  * A field the model cannot see is `null`, never omitted and never guessed.
  */
-export const EXTRACTION_SCHEMA_VERSION = "extraction-v1" as const;
+export const EXTRACTION_SCHEMA_VERSION = "extraction-v2" as const;
 
 /** A value as printed on the source page. Never coerced to a number here. */
 export const RawText = z.string();
@@ -49,6 +49,24 @@ export const ExtractedLine = z
   .strict();
 export type ExtractedLine = z.infer<typeof ExtractedLine>;
 
+export const CHARGE_TYPES = ["freight", "discount", "insurance", "other"] as const;
+export type ChargeType = (typeof CHARGE_TYPES)[number];
+
+/**
+ * A printed non-product charge (freight, discount, insurance, fees). `type`
+ * labels only what the printed text says; `amount` keeps any printed sign.
+ * The normalizer, not the model, decides the sign applied to the total.
+ */
+export const ExtractedCharge = z
+  .object({
+    page: PageNumber,
+    type: z.enum(CHARGE_TYPES),
+    description: RawField,
+    amount: RawField,
+  })
+  .strict();
+export type ExtractedCharge = z.infer<typeof ExtractedCharge>;
+
 export const ExtractedHeader = z
   .object({
     invoiceNumber: RawField,
@@ -74,18 +92,21 @@ export const PageExtraction = z
     page: PageNumber,
     header: ExtractedHeader,
     lines: z.array(ExtractedLine),
+    charges: z.array(ExtractedCharge),
   })
   .strict()
   .superRefine((value, ctx) => {
-    value.lines.forEach((line, i) => {
-      if (line.page !== value.page) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["lines", i, "page"],
-          message: `line page ${line.page} does not match extraction page ${value.page}`,
-        });
-      }
-    });
+    for (const key of ["lines", "charges"] as const) {
+      value[key].forEach((item, i) => {
+        if (item.page !== value.page) {
+          ctx.addIssue({
+            code: "custom",
+            path: [key, i, "page"],
+            message: `${key === "lines" ? "line" : "charge"} page ${item.page} does not match extraction page ${value.page}`,
+          });
+        }
+      });
+    }
   });
 export type PageExtraction = z.infer<typeof PageExtraction>;
 
@@ -99,7 +120,7 @@ export const PageStatus = z
   .strict();
 export type PageStatus = z.infer<typeof PageStatus>;
 
-/** One invoice after pages are stitched: a single header and an ordered line list. */
+/** One invoice after pages are stitched: a single header, an ordered line list and the charges in page order. */
 export const DocumentExtraction = z
   .object({
     schemaVersion: z.literal(EXTRACTION_SCHEMA_VERSION),
@@ -107,6 +128,7 @@ export const DocumentExtraction = z
     pages: z.array(PageStatus),
     header: ExtractedHeader,
     lines: z.array(ExtractedLine),
+    charges: z.array(ExtractedCharge),
   })
   .strict();
 export type DocumentExtraction = z.infer<typeof DocumentExtraction>;

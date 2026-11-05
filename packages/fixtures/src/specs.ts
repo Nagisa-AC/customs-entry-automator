@@ -19,6 +19,13 @@ export interface LineSpec {
   amountOverride?: string;
 }
 
+export interface ChargeSpec {
+  type: "freight" | "discount" | "insurance" | "other";
+  description: string;
+  /** Canonical decimal, printed as-is per the invoice's format; "150" prints unsigned even for a discount. */
+  amount: string;
+}
+
 export interface ExpectedFailure {
   ruleId: string;
   row: number | null;
@@ -49,6 +56,8 @@ export interface InvoiceSpec {
   /** 0-based indexes of lines whose row is split across the following page break. */
   splitRows?: number[];
   lines: LineSpec[];
+  /** Printed below the last row on the last page, before the total; the total includes them. */
+  charges?: ChargeSpec[];
   expectedFailures: ExpectedFailure[];
 }
 
@@ -174,4 +183,25 @@ const broken: InvoiceSpec = {
   ],
 };
 
-export const INVOICE_SPECS: readonly InvoiceSpec[] = [cleanUs, multiPage, european, broken];
+const freightDiscount: InvoiceSpec = {
+  name: "freight-discount",
+  purpose:
+    "One-page invoice with a freight charge and a discount printed without a minus sign. R2 fails because M1 doesn't support adjustments; lines plus charges match the total once the discount's sign is inferred.",
+  format: "dot",
+  currency: "USD",
+  incoterms: "CFR Oakland",
+  weights: { gross: "980", net: "905.5", unit: "KG" },
+  invoiceNumber: "SM-5521",
+  invoiceDate: "2026-10-05",
+  seller: "Summit Coast Hardware Co. (synthetic)",
+  buyer: "Example Importer LLC (synthetic)",
+  rowsPerPage: [6],
+  lines: hardwareLines(6, 23, "SM"),
+  charges: [
+    { type: "freight", description: "Ocean freight to Oakland", amount: "185.00" },
+    { type: "discount", description: "Volume discount", amount: "120.00" },
+  ],
+  expectedFailures: [{ ruleId: "R2-footer-total", row: null }],
+};
+
+export const INVOICE_SPECS: readonly InvoiceSpec[] = [cleanUs, multiPage, european, broken, freightDiscount];

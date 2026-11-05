@@ -69,7 +69,7 @@ describe("extract()", () => {
       "page-001.json", "page-001.raw.json", "page-002.json", "page-002.raw.json", "page-003.json", "page-003.raw.json",
     ]);
     const raw = JSON.parse(await readFile(join(dir, "page-002.raw.json"), "utf8"));
-    expect(raw).toMatchObject({ provider: "test", model: "m1", promptVersion: "page-prompt-v2", schemaVersion: "extraction-v1", page: 2, attempts: 1 });
+    expect(raw).toMatchObject({ provider: "test", model: "m1", promptVersion: "page-prompt-v3", schemaVersion: "extraction-v2", page: 2, attempts: 1 });
     expect(typeof raw.rawText).toBe("string");
     expect(raw.cacheKey).toMatch(/^[0-9a-f]{64}$/);
   });
@@ -149,7 +149,7 @@ describe("extract()", () => {
 
   it.each([
     ["not json", "provider output is not valid JSON"],
-    [JSON.stringify({ schemaVersion: "extraction-v1", page: 1, header: {}, lines: [] }), "schema validation failed"],
+    [JSON.stringify({ schemaVersion: "extraction-v2", page: 1, header: {}, lines: [], charges: [] }), "schema validation failed"],
   ])("rejects malformed output (%s) but keeps the raw response", async (rawText, error) => {
     const dir = await tmp();
     const p = new CountingProvider(async () => ({ rawText, usage: null }));
@@ -201,7 +201,13 @@ describe("provider JSON schema (generated from Zod)", () => {
       expect(n.additionalProperties, path).toBe(false);
       expect([...(n.required as string[])].sort(), path).toEqual(Object.keys(n.properties as Node).sort());
     });
-    expect(objects).toBe(3);
+    expect(objects).toBe(4);
+  });
+
+  it("offers charges with the four charge types and raw string amounts", () => {
+    const charge = (props(schema).charges as { items: Node }).items;
+    expect(props(charge).type).toEqual({ type: "string", enum: ["freight", "discount", "insurance", "other"] });
+    expect(props(charge).amount).toEqual({ type: ["string", "null"] });
   });
 
   it("contains no numeric or string-length constraints and no tuples", () => {

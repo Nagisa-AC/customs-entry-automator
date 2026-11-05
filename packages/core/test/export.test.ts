@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { buildReport, countAdjustmentLines, escapeFormula, normalizeDocument, toLinesCsv, type CheckResult, type MatchedLine, type ReportInput } from "../src/index.ts";
+import {
+  buildReport,
+  escapeFormula,
+  normalizeDocument,
+  summarizeAdjustments,
+  toLinesCsv,
+  type CheckResult,
+  type ExtractedCharge,
+  type MatchedLine,
+  type ReportInput,
+} from "../src/index.ts";
 import { cleanDoc, line } from "./helpers.ts";
 
 function matched(overrides: Parameters<typeof line>[0] = {}): MatchedLine[] {
@@ -52,7 +62,7 @@ describe("buildReport", () => {
     extraction: { provider: "p", model: "m", pages: [{ page: 1, status: pageStatus, error: null, latencyMs: 1, inputTokens: null, outputTokens: null }] },
     lineCount: 2,
     matched: 1,
-    adjustments: { probableLines: [], r2Failed: false },
+    adjustments: summarizeAdjustments(normalizeDocument(cleanDoc()), []),
     checks,
   });
 
@@ -68,32 +78,49 @@ describe("buildReport", () => {
   });
 });
 
-describe("countAdjustmentLines", () => {
+describe("summarizeAdjustments", () => {
   const r2 = (outcome: "pass" | "fail"): CheckResult => ({
-    ruleId: "R2-footer-total", ruleVersion: "1", severity: "blocking", outcome, row: null, page: null, field: "invoiceTotal", expected: null, actual: null, message: "",
+    ruleId: "R2-footer-total", ruleVersion: "2", severity: "blocking", outcome, row: null, page: null, field: "invoiceTotal", expected: null, actual: null, message: "",
   });
+  const charge = (type: ExtractedCharge["type"], amount: string | null, page = 2): ExtractedCharge => ({ page, type, description: `${type} charge`, amount });
 
-  it("flags lines with adjustment terms or no SKU and records whether R2 failed", () => {
+  it("reports charges by type with signed sums, inferring an unsigned discount as negative", () => {
     const doc = cleanDoc();
-    doc.lines.push(
-      line({ page: 2, rowOnPage: 2, sku: null, description: "Ocean freight", quantity: "1", unitPrice: "80.00", extendedPrice: "80.00" }),
-      line({ page: 2, rowOnPage: 3, sku: "DISC-5", description: "Early-payment discount 5%", quantity: "1", unitPrice: "(10.00)", extendedPrice: "(10.00)" }),
-      line({ page: 2, rowOnPage: 4, sku: null, description: "Misc" }),
-    );
-    const result = countAdjustmentLines(normalizeDocument(doc).lines, [r2("fail")]);
+    doc.header.invoiceTotal = "$1,595.00";
+    doc.charges = [charge("freight", "80.00"), charge("discount", "10.00")];
+    const result = summarizeAdjustments(normalizeDocument(doc), [r2("fail")]);
     expect(result).toEqual({
-      probableLines: [
-        { row: 4, page: 2, reason: "adjustment-term", term: "freight" },
-        { row: 5, page: 2, reason: "adjustment-term", term: "discount" },
-        { row: 6, page: 2, reason: "no-sku", term: null },
+      byType: {
+        freight: { count: 1, sum: "80.00" },
+        discount: { count: 1, sum: "-10.00" },
+        insurance: { count: 0, sum: "0" },
+        other: { count: 0, sum: "0" },
+      },
+      charges: [
+        { index: 1, page: 2, type: "freight", description: "freight charge", amount: "80.00", signedAmount: "80.00", signInferred: false },
+        { index: 2, page: 2, type: "discount", description: "discount charge", amount: "10.00", signedAmount: "-10.00", signInferred: true },
       ],
+      sum: "70.00",
+      signInferred: true,
       r2Failed: true,
+      linesPlusChargesMatchTotal: true,
     });
   });
 
-  it("does not match terms inside other words, and reports R2 passing", () => {
+  it("lets a printed sign win and never infers a sign for other charge types", () => {
     const doc = cleanDoc();
-    doc.lines = [line({ description: "Coffee grinder, uncharged battery" })];
-    expect(countAdjustmentLines(normalizeDocument(doc).lines, [r2("pass")])).toEqual({ probableLines: [], r2Failed: false });
+    doc.charges = [charge("discount", "(10.00)"), charge("other", "-5.00"), charge("insurance", "15.00")];
+    const result = summarizeAdjustments(normalizeDocument(doc), [r2("pass")]);
+    expect(result.charges.map((c) => [c.signedAmount, c.signInferred])).toEqual([["-10.00", false], ["-5.00", false], ["15.00", false]]);
+    expect(result).toMatchObject({ sum: "0.00", signInferred: false, r2Failed: false, linesPlusChargesMatchTotal: true });
+  });
+
+  it("reports no charges as zero, and an unreadable amount as unknown", () => {
+    const none = summarizeAdjustments(normalizeDocument(cleanDoc()), [r2("pass")]);
+    expect(none).toMatchObject({ charges: [], sum: "0", signInferred: false, linesPlusChargesMatchTotal: true });
+    const doc = cleanDoc();
+    doc.charges = [charge("freight", "n/a")];
+    const unreadable = summarizeAdjustments(normalizeDocument(doc), [r2("pass")]);
+    expect(unreadable).toMatchObject({ sum: null, byType: { freight: { count: 1, sum: null } }, linesPlusChargesMatchTotal: null });
   });
 });

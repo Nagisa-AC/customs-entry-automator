@@ -1,8 +1,9 @@
+import Decimal from "decimal.js";
 import type { CheckResult } from "./checks.ts";
 import { detectDecimalFormat, parseNumber, type DecimalFormat } from "./decimal-format.ts";
-import type { DocumentExtraction, ExtractedHeader, ExtractedLine, PageStatus, SourceRegion } from "./schema.ts";
+import type { ChargeType, DocumentExtraction, ExtractedCharge, ExtractedHeader, ExtractedLine, PageStatus, SourceRegion } from "./schema.ts";
 
-export const NORMALIZER_VERSION = "normalizer-v1";
+export const NORMALIZER_VERSION = "normalizer-v2";
 
 /** A parsed number that keeps its source string. `value` is a canonical decimal string. */
 export interface Amount {
@@ -71,6 +72,21 @@ export interface NormalizedLine {
   source: ExtractedLine;
 }
 
+export interface NormalizedCharge {
+  /** 1-based position in the stitched charge list. */
+  index: number;
+  page: number;
+  type: ChargeType;
+  description: string | null;
+  /** As printed, sign included. */
+  amount: Amount | null;
+  /** The amount as it applies to the invoice total. */
+  signedAmount: Amount | null;
+  /** True when an unsigned discount was treated as negative. */
+  signInferred: boolean;
+  source: ExtractedCharge;
+}
+
 export interface NormalizedDocument {
   schemaVersion: DocumentExtraction["schemaVersion"];
   normalizerVersion: typeof NORMALIZER_VERSION;
@@ -80,6 +96,7 @@ export interface NormalizedDocument {
   header: NormalizedHeader;
   rawHeader: ExtractedHeader;
   lines: NormalizedLine[];
+  charges: NormalizedCharge[];
   /** Normalization findings (format detection and unparseable values). */
   findings: CheckResult[];
 }
@@ -110,6 +127,7 @@ function collectNumericRaws(doc: DocumentExtraction): string[] {
     push(line.unitPrice);
     push(line.extendedPrice);
   }
+  for (const charge of doc.charges) push(charge.amount);
   return raws;
 }
 
@@ -215,6 +233,24 @@ export function normalizeDocument(doc: DocumentExtraction): NormalizedDocument {
     };
   });
 
+  const charges = doc.charges.map((charge, i): NormalizedCharge => {
+    const parsed = amount(charge.amount, "charges.amount", true, { row: null, page: charge.page });
+    // A printed minus sign or parentheses already made the value negative and always wins.
+    const signInferred = parsed !== null && charge.type === "discount" && new Decimal(parsed.value).gt(0);
+    const signedAmount =
+      parsed === null ? null : signInferred ? { ...parsed, value: new Decimal(parsed.value).neg().toFixed() } : parsed;
+    return {
+      index: i + 1,
+      page: charge.page,
+      type: charge.type,
+      description: text(charge.description),
+      amount: parsed,
+      signedAmount,
+      signInferred,
+      source: charge,
+    };
+  });
+
   return {
     schemaVersion: doc.schemaVersion,
     normalizerVersion: NORMALIZER_VERSION,
@@ -224,6 +260,7 @@ export function normalizeDocument(doc: DocumentExtraction): NormalizedDocument {
     header,
     rawHeader: doc.header,
     lines,
+    charges,
     findings,
   };
 }

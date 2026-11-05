@@ -8,13 +8,16 @@ import { run, selectProvider } from "../src/main.ts";
 
 interface Report {
   status: string;
+  lineCount: number;
   summary: { lines: number; blocking: number };
   extraction: { pages: { status: string }[] };
-  checks: { ruleId: string; row: number | null; page: number | null; outcome: string; severity: string }[];
+  checks: { ruleId: string; row: number | null; page: number | null; outcome: string; severity: string; message: string }[];
+  adjustments: unknown;
 }
 
 interface GroundTruth {
   lines: { row: number; hts10: string | null }[];
+  charges: { page: number; type: string; description: string }[];
   expectedFailures: { ruleId: string; row: number | null }[];
 }
 
@@ -93,7 +96,29 @@ describe("M1 exit criterion on the synthetic labeled set", () => {
     expect(failures).toEqual(expected);
     expect(report.status).toBe(expected.length && report.checks.some((c) => c.outcome === "fail" && c.severity === "blocking") ? "needs_review" : "ready_for_approval");
     expect(report.checks.every((c) => typeof c.ruleId === "string" && "row" in c && "page" in c)).toBe(true);
-    expect((report as unknown as { adjustments: unknown }).adjustments).toEqual({ probableLines: [], r2Failed: false });
+    expect(report.adjustments).toMatchObject({
+      charges: gt.charges.map((c) => ({ page: c.page, type: c.type, description: c.description })),
+      r2Failed: gt.expectedFailures.some((f) => f.ruleId === "R2-footer-total"),
+      linesPlusChargesMatchTotal: true,
+    });
+  });
+
+  it("freight-discount: R2 fails, its finding reconciles lines plus charges and says the discount's sign was inferred", async () => {
+    const report = JSON.parse(first.get(join("freight-discount", "report.json"))!.toString()) as Report;
+    const r2 = report.checks.find((c) => c.ruleId === "R2-footer-total")!;
+    expect(r2).toMatchObject({ outcome: "fail", severity: "blocking" });
+    expect(r2.message).toMatch(/Lines plus 2 charge\(s\) sum to 24436\.75, which matches the invoice total/);
+    expect(r2.message).toMatch(/sign of charge 2 was inferred/);
+    expect(report.adjustments).toMatchObject({
+      byType: { freight: { count: 1, sum: "185.00" }, discount: { count: 1, sum: "-120.00" }, insurance: { count: 0 }, other: { count: 0 } },
+      sum: "65.00",
+      signInferred: true,
+    });
+    expect(report.status).toBe("needs_review");
+    const csv = first.get(join("freight-discount", "lines.review.csv"))!.toString();
+    expect(csv).not.toMatch(/freight|discount/i);
+    expect(csv.trim().split("\r\n")).toHaveLength(1 + report.lineCount);
+    expect(first.has(join("freight-discount", "lines.csv"))).toBe(false);
   });
 
   it("removes a stale lines.csv when a re-run becomes blocked", async () => {
@@ -152,10 +177,22 @@ describe("cli", () => {
     expect(await run(["bogus"])).toBe(2);
   });
 
-  it("selects the fixture provider when recordings exist, and requires keys otherwise", () => {
+  it("auto uses recorded extractions only and fails without them, even with real provider keys set", () => {
     const pdf = join(fixtureDir("clean-us-single-page"), "invoice.pdf");
+    const allKeys = {
+      OPENAI_API_KEY: "k", CEA_OPENAI_MODEL: "m", ANTHROPIC_API_KEY: "k", CEA_ANTHROPIC_MODEL: "m",
+      CEA_PROVIDER_ZERO_RETENTION: "confirmed", CEA_PROVIDER_REGION: "us",
+    };
     expect(selectProvider("auto", pdf, undefined, {}).id).toBe("fixture");
-    expect(() => selectProvider("auto", "/nowhere/invoice.pdf", undefined, {})).toThrow(/OPENAI_API_KEY/);
+    expect(selectProvider("auto", pdf, undefined, allKeys).id).toBe("fixture");
+    expect(() => selectProvider("auto", "/nowhere/invoice.pdf", undefined, allKeys)).toThrow(/never calls a model.*--provider openai\|anthropic/);
+    expect(() => selectProvider("fixture", "/nowhere/invoice.pdf", undefined, allKeys)).toThrow(/no recorded extractions/);
+    expect(selectProvider("openai", "/nowhere/invoice.pdf", undefined, allKeys).id).toBe("openai");
+    expect(selectProvider("anthropic", "/nowhere/invoice.pdf", undefined, allKeys).id).toBe("anthropic");
+  });
+
+  it("real providers run only when named, and still require keys and data terms", () => {
+    const pdf = join(fixtureDir("clean-us-single-page"), "invoice.pdf");
     expect(() => selectProvider("openai", pdf, undefined, {})).toThrow(/zero data retention/);
     expect(() => selectProvider("openai", pdf, undefined, { OPENAI_API_KEY: "k", CEA_OPENAI_MODEL: "m" })).toThrow(/zero data retention/);
     expect(

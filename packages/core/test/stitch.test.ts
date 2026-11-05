@@ -10,6 +10,7 @@ import {
   runRules,
   stitch,
   type CheckResult,
+  type ExtractedCharge,
   type ExtractedLine,
   type PageExtraction,
   type PageInput,
@@ -22,6 +23,7 @@ interface GroundTruth {
   decimalFormat: string;
   header: Record<string, string>;
   lines: Record<string, string | number | null>[];
+  charges: Record<string, string | number>[];
   expectedFailures: { ruleId: string; row: number | null }[];
 }
 
@@ -46,10 +48,10 @@ const emptyHeader = {
   incoterms: null, invoiceTotal: null, totalGrossWeight: null, totalNetWeight: null,
 };
 
-function outcome(page: number, lines: ExtractedLine[], header: Partial<PageExtraction["header"]> = {}): PageOutcome {
+function outcome(page: number, lines: ExtractedLine[], header: Partial<PageExtraction["header"]> = {}, charges: ExtractedCharge[] = []): PageOutcome {
   return {
     page, status: "extracted", error: null, cached: false, provider: "t", model: "m", latencyMs: 0, usage: null,
-    extraction: { schemaVersion: "extraction-v1", page, header: { ...emptyHeader, ...header }, lines },
+    extraction: { schemaVersion: "extraction-v2", page, header: { ...emptyHeader, ...header }, lines, charges },
   };
 }
 
@@ -78,6 +80,9 @@ describe("stitch() on synthetic fixtures", () => {
         countryOfOrigin: l.countryOfOrigin,
       })),
     ).toEqual(gt.lines.map(({ hts10: _h, ...rest }) => rest));
+    expect(
+      n.charges.map((c) => ({ page: c.page, type: c.type, description: c.description, amount: c.amount?.value, signedAmount: c.signedAmount?.value })),
+    ).toEqual(gt.charges);
   });
 
   it.each(listFixtures())("%s: rule failures are exactly the expected ones", async (name) => {
@@ -149,5 +154,19 @@ describe("stitch() edge cases", () => {
   it("orders pages regardless of input order", () => {
     const { document } = stitch([outcome(2, [tail]), outcome(1, [head])], 2);
     expect(document.lines).toHaveLength(1);
+  });
+
+  it("collects charges from every page in page order, keeping them out of the lines", () => {
+    const charge = (page: number, type: ExtractedCharge["type"], amount: string): ExtractedCharge => ({ page, type, description: type, amount });
+    const { document } = stitch(
+      [
+        outcome(3, [line({ page: 3 })], {}, [charge(3, "discount", "10.00"), charge(3, "other", "2.00")]),
+        outcome(1, [line()], {}, [charge(1, "freight", "50.00")]),
+        failed(2),
+      ],
+      3,
+    );
+    expect(document.charges.map((c) => `${c.page}:${c.type}`)).toEqual(["1:freight", "3:discount", "3:other"]);
+    expect(document.lines).toHaveLength(2);
   });
 });

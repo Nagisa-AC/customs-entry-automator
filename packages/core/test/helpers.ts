@@ -43,5 +43,6 @@ export function cleanDoc(): DocumentExtraction {
       line({ rowOnPage: 2, sku: "AB-200", description: "Hinge", quantity: "1,000", unitPrice: "1.25", extendedPrice: "1,250.00" }),
       line({ page: 2, sku: "CD-300", description: "Gasket", quantity: "100", unitPrice: "2.50", extendedPrice: "250.00" }),
     ],
+    charges: [],
   };
 }

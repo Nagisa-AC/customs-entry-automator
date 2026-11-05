@@ -3,13 +3,14 @@ import {
   EXTRACTION_SCHEMA_VERSION,
   HEADER_FIELDS,
   type DocumentExtraction,
+  type ExtractedCharge,
   type ExtractedHeader,
   type ExtractedLine,
   type PageStatus,
 } from "../schema.ts";
 import type { PageOutcome } from "./extract.ts";
 
-export const STITCHER_VERSION = "stitch-v1";
+export const STITCHER_VERSION = "stitch-v2";
 
 const VALUE_FIELDS = ["sku", "quantity", "unitOfMeasure", "unitPrice", "extendedPrice", "countryOfOrigin"] as const;
 
@@ -122,8 +123,10 @@ export function stitch(outcomes: readonly PageOutcome[], pageCount: number): Sti
     prevPage = o.page;
   }
 
+  const charges: ExtractedCharge[] = sorted.flatMap((o) => o.extraction?.charges ?? []);
+
   return {
-    document: { schemaVersion: EXTRACTION_SCHEMA_VERSION, pageCount, pages, header, lines },
+    document: { schemaVersion: EXTRACTION_SCHEMA_VERSION, pageCount, pages, header, lines, charges },
     findings,
   };
 }

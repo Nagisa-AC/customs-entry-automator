@@ -31,9 +31,10 @@ const USAGE = `usage:
   cea version
 
 stages: ${STAGES.join(", ")}
---provider auto (default) uses recorded extractions when <pdf dir>/extractions exists
-(or --fixture-dir is given), otherwise OpenAI (OPENAI_API_KEY + CEA_OPENAI_MODEL).
-anthropic needs ANTHROPIC_API_KEY + CEA_ANTHROPIC_MODEL. simulated-noisy is an offline,
+--provider auto (default) uses only recorded extractions (<pdf dir>/extractions or
+--fixture-dir) and fails when there are none; it never calls a model. Real providers run
+only when named: openai needs OPENAI_API_KEY + CEA_OPENAI_MODEL, anthropic needs
+ANTHROPIC_API_KEY + CEA_ANTHROPIC_MODEL. simulated-noisy is an offline,
 deliberately error-prone stand-in for exercising compare without keys.
 run-set expects one folder per invoice containing invoice.pdf and sku-sheet.csv|xlsx;
 compare additionally needs ground-truth.json. --prices is JSON:
@@ -53,8 +54,12 @@ export function selectProvider(
   env: NodeJS.ProcessEnv = process.env,
 ): ExtractionProvider {
   const recorded = fixtureDir ?? join(dirname(pdfPath), "extractions");
-  if (name === "fixture" || (name === "auto" && (fixtureDir !== undefined || existsSync(recorded)))) {
-    if (!existsSync(recorded)) throw new UsageError(`no recorded extractions at ${recorded}`);
+  if (name === "auto" || name === "fixture") {
+    if (!existsSync(recorded)) {
+      throw new UsageError(
+        `no recorded extractions at ${recorded}; --provider ${name} never calls a model. Pass --fixture-dir, or name a real provider with --provider openai|anthropic`,
+      );
+    }
     return new FixtureProvider(recorded);
   }
   if (name === "simulated-noisy") {
@@ -62,12 +67,7 @@ export function selectProvider(
     return new SimulatedNoisyProvider(recorded);
   }
   if (name === "anthropic") return new AnthropicProvider(anthropicConfigFromEnv(env));
-  if (name === "openai" || name === "auto") {
-    if (name === "auto" && !env.OPENAI_API_KEY) {
-      throw new UsageError("no recorded extractions found and OPENAI_API_KEY is not set; pass --fixture-dir or configure a provider");
-    }
-    return new OpenAIProvider(openAIConfigFromEnv(env));
-  }
+  if (name === "openai") return new OpenAIProvider(openAIConfigFromEnv(env));
   throw new UsageError(`unknown provider "${name}"`);
 }
 

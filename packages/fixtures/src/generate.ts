@@ -96,7 +96,15 @@ export interface GeneratedInvoice {
 
 export async function generateInvoice(spec: InvoiceSpec): Promise<GeneratedInvoice> {
   const printed = spec.lines.map((l) => printLine(l, spec.format));
-  const total = printed.reduce((a, p) => a.plus(p.amountValue), new Decimal(0));
+  const charges = (spec.charges ?? []).map((c) => {
+    const value = new Decimal(c.amount);
+    return {
+      spec: c,
+      printed: formatNumber(value, Math.max(2, scaleOf(c.amount)), spec.format),
+      signed: c.type === "discount" && value.gt(0) ? value.neg() : value,
+    };
+  });
+  const total = [...printed.map((p) => p.amountValue), ...charges.map((c) => c.signed)].reduce((a, v) => a.plus(v), new Decimal(0));
   const totalPrinted = formatNumber(total, 2, spec.format);
   const weight = (canonical: string) => `${formatNumber(new Decimal(canonical), scaleOf(canonical), spec.format)} ${spec.weights.unit}`;
   const grossPrinted = weight(spec.weights.gross);
@@ -197,7 +205,14 @@ export async function generateInvoice(spec: InvoiceSpec): Promise<GeneratedInvoi
       y -= ROW_H;
     });
 
+    const pageCharges: unknown[] = [];
     if (pageNo === pageCount) {
+      for (const c of charges) {
+        text(page, font, c.spec.description, COLS.description, y);
+        text(page, font, c.printed, COLS.amount, y);
+        pageCharges.push({ page: pageNo, type: c.spec.type, description: c.spec.description, amount: c.printed });
+        y -= ROW_H;
+      }
       y -= 4;
       page.drawLine({ start: { x: 30, y: y + 10 }, end: { x: 590, y: y + 10 }, thickness: 0.5 });
       text(page, bold, `TOTAL ${spec.currency}`, COLS.unitPrice - 20, y - 4, 9);
@@ -213,7 +228,7 @@ export async function generateInvoice(spec: InvoiceSpec): Promise<GeneratedInvoi
     text(page, font, `Page ${pageNo} of ${pageCount}`, 270, 30);
     text(page, font, "SYNTHETIC TEST DOCUMENT - NOT A REAL INVOICE", 200, 18, 7);
 
-    pageExtractions.push({ schemaVersion: "extraction-v1", page: pageNo, header, lines });
+    pageExtractions.push({ schemaVersion: "extraction-v2", page: pageNo, header, lines, charges: pageCharges });
   });
 
   const pdf = await doc.save({ useObjectStreams: false });
@@ -249,6 +264,13 @@ export async function generateInvoice(spec: InvoiceSpec): Promise<GeneratedInvoi
       extendedPrice: pl.amountValue.toFixed(),
       countryOfOrigin: pl.spec.origin,
       hts10: pl.spec.inCatalog === false ? null : pl.spec.hts10,
+    })),
+    charges: charges.map((c) => ({
+      page: pageCount,
+      type: c.spec.type,
+      description: c.spec.description,
+      amount: new Decimal(c.spec.amount).toFixed(),
+      signedAmount: c.signed.toFixed(),
     })),
     expectedFailures: spec.expectedFailures,
   };
