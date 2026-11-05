@@ -9,6 +9,9 @@ checks and decides. This repo currently holds the M1 CLI pipeline.
 - `packages/core` — extraction schema (Zod), normalizer, validation rules, and
   other pure pipeline stages. Numbers are kept as raw printed strings until the
   normalizer parses them with `decimal.js`.
+- `packages/core/src/pdf` — PDF render + text-layer reading in a sandboxed
+  child process (heap cap, timeout, page/byte/pixel limits, empty env).
+- `packages/fixtures` — synthetic invoice PDFs, SKU sheets and ground truth.
 - `apps/cli` — the `cea` command that wires the stages together.
 
 ## Development
