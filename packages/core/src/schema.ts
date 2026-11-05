@@ -89,11 +89,22 @@ export const PageExtraction = z
   });
 export type PageExtraction = z.infer<typeof PageExtraction>;
 
+/** Outcome of extracting one page; a failed page is kept so its absence is visible. */
+export const PageStatus = z
+  .object({
+    page: PageNumber,
+    status: z.enum(["extracted", "failed"]),
+    error: z.string().nullable(),
+  })
+  .strict();
+export type PageStatus = z.infer<typeof PageStatus>;
+
 /** One invoice after pages are stitched: a single header and an ordered line list. */
 export const DocumentExtraction = z
   .object({
     schemaVersion: z.literal(EXTRACTION_SCHEMA_VERSION),
     pageCount: z.number().int().min(1),
+    pages: z.array(PageStatus),
     header: ExtractedHeader,
     lines: z.array(ExtractedLine),
   })
