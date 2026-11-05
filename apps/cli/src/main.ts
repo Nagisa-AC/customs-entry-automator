@@ -1,30 +1,43 @@
 import {
+  AnthropicProvider,
+  anthropicConfigFromEnv,
+  comparisonMarkdown,
   EXTRACTION_SCHEMA_VERSION,
   FixtureProvider,
   isBlockingFailure,
   OpenAIProvider,
   openAIConfigFromEnv,
   PIPELINE_VERSIONS,
+  runComparison,
   runPipeline,
+  SimulatedNoisyProvider,
   STAGES,
   type ExtractionProvider,
+  type PriceTable,
   type PipelineResult,
   type Stage,
 } from "@cea/core";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, dirname, extname, join, relative } from "node:path";
 import { parseArgs } from "node:util";
 
+const PROVIDERS = "auto|fixture|openai|anthropic|simulated-noisy";
+
 const USAGE = `usage:
-  cea run <invoice.pdf> --skus <sheet.csv|xlsx> [--out <dir>] [--provider auto|fixture|openai]
+  cea run <invoice.pdf> --skus <sheet.csv|xlsx> [--out <dir>] [--provider ${PROVIDERS}]
           [--fixture-dir <dir>] [--from <stage>] [--no-cache]
-  cea run-set <dir> [--out <dir>] [--provider auto|fixture|openai]
+  cea run-set <dir> [--out <dir>] [--provider ${PROVIDERS}]
+  cea compare <labeled-set-dir> --providers <a,b,...> [--out <dir>] [--prices <prices.json>] [--no-cache]
   cea version
 
 stages: ${STAGES.join(", ")}
 --provider auto (default) uses recorded extractions when <pdf dir>/extractions exists
 (or --fixture-dir is given), otherwise OpenAI (OPENAI_API_KEY + CEA_OPENAI_MODEL).
-run-set expects one folder per invoice containing invoice.pdf and sku-sheet.csv|xlsx.
+anthropic needs ANTHROPIC_API_KEY + CEA_ANTHROPIC_MODEL. simulated-noisy is an offline,
+deliberately error-prone stand-in for exercising compare without keys.
+run-set expects one folder per invoice containing invoice.pdf and sku-sheet.csv|xlsx;
+compare additionally needs ground-truth.json. --prices is JSON:
+{"<provider>" or "<provider>/<model>": {"inputPerMTok": n, "outputPerMTok": n}}.
 Without blocking findings the lines go to lines.csv. With any blocking finding only
 lines.review.csv is written (affected rows marked needs_review) and the exit code is 1.
 Real providers also need CEA_PROVIDER_ZERO_RETENTION=confirmed and CEA_PROVIDER_REGION=us,
@@ -44,6 +57,11 @@ export function selectProvider(
     if (!existsSync(recorded)) throw new UsageError(`no recorded extractions at ${recorded}`);
     return new FixtureProvider(recorded);
   }
+  if (name === "simulated-noisy") {
+    if (!existsSync(recorded)) throw new UsageError(`no recorded extractions at ${recorded}`);
+    return new SimulatedNoisyProvider(recorded);
+  }
+  if (name === "anthropic") return new AnthropicProvider(anthropicConfigFromEnv(env));
   if (name === "openai" || name === "auto") {
     if (name === "auto" && !env.OPENAI_API_KEY) {
       throw new UsageError("no recorded extractions found and OPENAI_API_KEY is not set; pass --fixture-dir or configure a provider");
@@ -97,6 +115,33 @@ export async function run(argv: string[]): Promise<number> {
     if (command === "version" || command === "--version") {
       console.log(`cea (schema ${EXTRACTION_SCHEMA_VERSION})`);
       console.log(JSON.stringify(PIPELINE_VERSIONS));
+      return 0;
+    }
+    if (command === "compare") {
+      const { values, positionals } = parseArgs({
+        args: rest,
+        allowPositionals: true,
+        options: {
+          providers: { type: "string" },
+          out: { type: "string", default: join(".cea-out", "compare") },
+          prices: { type: "string" },
+          "no-cache": { type: "boolean", default: false },
+        },
+      });
+      const [setDir] = positionals;
+      if (!setDir || positionals.length > 1) throw new UsageError("compare takes exactly one labeled-set folder");
+      const names = (values.providers ?? "").split(",").map((p) => p.trim()).filter(Boolean);
+      if (!names.length) throw new UsageError("--providers is required, e.g. --providers openai,anthropic");
+      const prices = values.prices ? (JSON.parse(readFileSync(values.prices, "utf8")) as PriceTable) : undefined;
+      const summaries = await runComparison({
+        setDir,
+        outDir: values.out,
+        providers: names.map((name) => ({ name, create: (dir: string) => selectProvider(name, join(dir, "invoice.pdf"), undefined) })),
+        useCache: !values["no-cache"],
+        ...(prices ? { prices } : {}),
+      });
+      console.log(comparisonMarkdown(summaries));
+      console.log(`wrote ${join(values.out, "comparison.json")} and comparison.md`);
       return 0;
     }
     if (command === "run" || command === "run-set") {
